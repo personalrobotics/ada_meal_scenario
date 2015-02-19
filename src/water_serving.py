@@ -14,6 +14,9 @@ import tf
 import rospkg
 import sys
 
+from threading import Timer
+from time import sleep
+
 import os
 import time
 
@@ -22,6 +25,7 @@ import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from tf.transformations import quaternion_matrix,quaternion_from_matrix
 
+from std_msgs.msg import String
 #rom TransformMatrix import *
 #from str2num import *
 
@@ -30,6 +34,8 @@ import IPython
 from prpy.tsr.tsrlibrary import TSRFactory
 from prpy.tsr.tsr import *
 from adapy.tsr import glass as glassUtils
+
+from tasklogger import TaskLogger
 
  
 #some hard-coded configurations   
@@ -68,7 +74,49 @@ slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
 #startConfiguration = np.asarray([ 2.17332001, -0.06063751,  1.04142249,  1.2602073 , -0.67115841, 1.31018697])
   
+class RepeatedTimer(object):
+    def __init__(self, interval, function, *args, **kwargs):
+        self._timer     = None
+        self.interval   = interval
+        self.function   = function
+        self.args       = args
+        self.kwargs     = kwargs
+        self.is_running = False
+        self.start()
 
+    def _run(self):
+        self.is_running = False
+        self.start()
+        self.function(*self.args, **self.kwargs)
+
+    def start(self):
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.start()
+            self.is_running = True
+
+    def stop(self):
+        self._timer.cancel()
+        self.is_running = False
+
+def publishTf(tf_broadcaster, robot, frame_name):  
+       transform = robot.GetTransform()
+       pose = openravepy.poseFromMatrix(transform)
+       quat = pose[0:4]
+       w = quat[0]
+       x = quat[1]
+       y = quat[2]
+       z = quat[3]
+       trans = pose[4:7]
+       #ros_quat = numpy.array([x,y,z,w])
+       
+       tf_broadcaster.sendTransform((trans[0], trans[1], trans[2]),
+                        #tf.transformations.quaternion_from_euler(0, 0, msg.theta),
+                        (x,y,z,w),
+                        rospy.Time.now(),
+                        frame_name,
+                        "/map")
+       #print "published transform"
 
 class ADAmanipulationTester:
 
@@ -104,8 +152,11 @@ class ADAmanipulationTester:
 
                         if(self.numOfUpdateCalls > self.NUM_UPDATE_CALLS):
                            self.MODE = self.GRASPING 
+                           self.findGlass_subtask.succeed()
+                           self.pub.publish(str(self.tasklist))
                            #self.NUM_UPDATE_CALLS = 20
                 elif self.MODE == self.GRASPING and self.Initialized == True:
+
                         self.MODE = self.RUNNING
                         self.planAndExecuteTrajectorySimple()
                         time.sleep(6)
@@ -117,6 +168,15 @@ class ADAmanipulationTester:
                         self.glass.SetTransform(glass_start_pose)
 
             #time.sleep(10.0)
+
+  def addWaterServingTask(self):
+      self.waterServing_task = self.tasklist.add_task('WaterServing')
+      self.findGlass_subtask = self.waterServing_task.add_task('Find Glass')
+      self.graspGlass_subtask = self.waterServing_task.add_task('Grasp Glass')
+      self.liftGlass_subtask = self.waterServing_task.add_task('Lift Glass')
+      self.drinkGlass_subtask = self.waterServing_task.add_task('Drink Glass')
+      self.returnGlass_subtask = self.waterServing_task.add_task('Return Glass')
+      self.placeGlass_subtask = self.waterServing_task.add_task('Place Glass')
 
 
   def initSimple(self):
@@ -167,7 +227,7 @@ class ADAmanipulationTester:
       ViewTopTrans = ViewTopObj.GetTransform()
 
       prpy.rave.disable_padding(self.glass, False)
-      self.glass.GetLink('padding_glass').SetVisible(False)
+      #self.glass.GetLink('padding_glass').SetVisible(False)
 
       self.numOfGrasps = 0
       self.numOfUpdateCalls = 100
@@ -204,8 +264,16 @@ class ADAmanipulationTester:
       #embed()
       #exit()
       self.sub = rospy.Subscriber('object_poses_array', MarkerArray, self.object_pose_callback)
+      self.pub = rospy.Publisher('ada_tasks',String, queue_size=10)
+
+      self.tasklist = TaskLogger()  
+      self.addWaterServingTask()
 
 
+      #new thread for tf global transform
+      br = tf.TransformBroadcaster()
+      t = RepeatedTimer(0.5, publishTf, br, self.robot, "/base_link")
+      t.start() 
       rospy.spin()    
 
   def getVelocitiesTrajectory(self, cartesian_vels):
@@ -254,6 +322,9 @@ class ADAmanipulationTester:
                   time.sleep(3.0)
                   self.robot.arm.hand.CloseHandTight()
                   self.robot.Grab(self.glass)
+                  self.graspGlass_subtask.succeed()
+                  self.pub.publish(str(self.tasklist))
+
 
                   #self.robot.Grab(self.glass)
                   #time.sleep(4.0)
@@ -294,16 +365,22 @@ class ADAmanipulationTester:
                 self.manip.PlanToConfiguration(liftConfiguration2)
                 #time.sleep(1)
                 #self.manip.PlanToConfiguration(placeConfiguration)
+                self.liftGlass_subtask.succeed()
+                self.pub.publish(str(self.tasklist))
                 time.sleep(8)
                 self.robot.SetDOFVelocityLimits(slowVelocityLimits)       
                 self.manip.PlanToConfiguration(drinkConfiguration)
                 time.sleep(6)
+                self.drinkGlass_subtask.succeed()
+                self.pub.publish(str(self.tasklist))
                 self.manip.PlanToConfiguration(liftConfiguration2)
                 time.sleep(3)
                 self.robot.SetDOFVelocityLimits(defaultVelocityLimits)
                 #embed()
                 print '11111111111111111111111111111111111111111'
                 self.manip.PlanToConfiguration(liftConfiguration1)
+                self.returnGlass_subtask.succeed()
+                self.pub.publish(str(self.tasklist))
                 time.sleep(6)
                 print('222222222222222222222222222222222222')
                 self.robot.SetDOFVelocityLimits(slowVelocityLimits)
@@ -317,14 +394,17 @@ class ADAmanipulationTester:
                   self.robot.arm.hand.OpenHand()
                   time.sleep(3.0)
                   self.robot.Release(self.glass)
+                  self.placeGlass_subtask.succeed()
+                  self.pub.publish(str(self.tasklist))
                   self.robot.SetDOFVelocityLimits(defaultVelocityLimits)
 
                   #time.sleep(3.0)
                   self.manip.PlanToConfiguration(startConfiguration)
+                  self.waterServing_task.succeed()
+                  self.pub.publish(str(self.tasklist))
                   time.sleep(3.0)
-                  #embed()
                   #exit()
-            
+                     
 
                 
           # with prpy.rave.Disabled(self.glass):
@@ -361,6 +441,10 @@ class ADAmanipulationTester:
           # glass_pose[1,3] = glass_pose_curr[1,3] 
           # glass_pose[2,3] = glass_pose_curr[2,3]
           self.glass.SetTransform(glass_pose)
+          print str(self.tasklist)
+          if(self.waterServing_task.is_complete()):
+            self.addWaterServingTask()
+            self.pub.publish(str(self.tasklist))
 
       except:
           self.numOfUpdateCalls = 0
