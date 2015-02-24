@@ -109,7 +109,8 @@ def publishTf(tf_broadcaster, robot, frame_name):
        z = quat[3]
        trans = pose[4:7]
        #ros_quat = numpy.array([x,y,z,w])
-       
+
+
        tf_broadcaster.sendTransform((trans[0], trans[1], trans[2]),
                         #tf.transformations.quaternion_from_euler(0, 0, msg.theta),
                         (x,y,z,w),
@@ -117,6 +118,12 @@ def publishTf(tf_broadcaster, robot, frame_name):
                         frame_name,
                         "/map")
        #print "published transform"
+
+       #hand transform
+       #camera_transform= robot.GetLink('Camera_RGB_Frame').GetTransform()
+       #hand_transform = robot.GetLink('Hand_Link').GetTransform()
+       #camera_hand_transform = numpy.dot(camera_transform,numpy.linalg.inv(hand_transform))
+
 
 class ADAmanipulationTester:
 
@@ -190,7 +197,7 @@ class ADAmanipulationTester:
       openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Debug)
       openravepy.misc.InitOpenRAVELogging();
       self.env, self.robot = adapy.initialize(attach_viewer='rviz', sim=False, env_path = env_path)
-      #embed()
+      embed()
 
       self.manip = self.robot.arm
       inds, pos = self.robot.configurations.get_configuration('home')
