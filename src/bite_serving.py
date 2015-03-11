@@ -14,8 +14,6 @@ import tf
 import rospkg
 import sys
 
-from twistHandler import Supervisor
-
 from threading import Timer
 from time import sleep
 
@@ -145,6 +143,27 @@ class ADAmanipulationTester:
       self.tasklist = TaskLogger()  
       self.addWaterServingTask()
 
+      
+      #test greedy_ik_planner
+
+      self.robot.planner = prpy.planning.Sequence(self.robot.greedy_ik_planner) 
+      iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK");
+      #  #embed()
+      self.manip = self.robot.arm
+      self.manip.SetIKSolver(iksolver)
+
+      # values = self.robot.GetActiveDOFValues()
+      # for i in range(0, self.robot.GetActiveDOF()):
+      #         if (values[i]<-numpy.pi):
+      #              values[i] = 2*numpy.pi + values[i]
+      #         elif(values[i]>numpy.pi):
+      #               values[i] = -2*numpy.pi+values[i]
+      # self.robot.SetActiveDOFValues(values)
+      # #embed()
+      # traj = self.manip.PlanToEndEffectorOffset([0.0,0.0,-1.0],0.1)
+      # time.sleep(3)
+      # traj = self.manip.PlanToEndEffectorOffset([0.0,0.0,1.0],0.1)
+      #embed()
       #rospy.spin()   
  
 
@@ -165,14 +184,22 @@ class ADAmanipulationTester:
           #embed()
  
           self.robot.SetDOFVelocityLimits(slowVelocityLimits)
-
-          self.manip.PlanToEndEffectorOffset([0,0,-1],0.16)
-          time.sleep(5)
-          self.manip.PlanToEndEffectorOffset([0,0,1],0.16)
+          self.robot.planner = prpy.planning.Sequence(self.robot.greedy_ik_planner) 
+          for i in range(0, self.robot.GetActiveDOF()):
+              values = self.robot.GetActiveDOFValues()
+              if (values[i]<-numpy.pi):
+                    values[i] = 2*numpy.pi + values[i]
+              elif(values[i]>numpy.pi):
+                     values[i] = -2*numpy.pi+values[i]
+          self.robot.SetActiveDOFValues(values)
+          self.manip.PlanToEndEffectorOffset([0,0,-1],0.18)
+          time.sleep(2)
+          self.manip.PlanToEndEffectorOffset([0,0,1],0.18)
           time.sleep(4)
+          self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
           self.robot.SetDOFVelocityLimits(defaultVelocityLimits)
           self.manip.PlanToConfiguration(readyToServePosition)
-          time.sleep(3)
+          time.sleep(2)
           self.robot.SetDOFVelocityLimits(slowVelocityLimits)
           self.manip.PlanToConfiguration(servingPosition)
           time.sleep(8)
@@ -192,9 +219,9 @@ if __name__ == "__main__":
     adaManipulationTester = ADAmanipulationTester()
     adaManipulationTester.initSimple()
     adaManipulationTester.planAndExecuteTrajectorySimple()
-    adaManipulationTester.robot.SetActiveDOFs([0,1,2,3,4,5,6,7]) #have to do that, otherwise get an error from roscontroller
+    #adaManipulationTester.robot.SetActiveDOFs([0,1,2,3,4,5,6,7]) #have to do that, otherwise get an error from roscontroller
     
     
-    embed()
+    #embed()
     #adaManipulationTester.initSimple() 
     #adaManipulationTester.planAndExecuteTrajectorySimple()
