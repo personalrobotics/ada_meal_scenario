@@ -196,8 +196,8 @@ class ADAmanipulationTester:
 
       openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Debug)
       openravepy.misc.InitOpenRAVELogging();
-      self.env, self.robot = adapy.initialize(attach_viewer='rviz', sim=False, env_path = env_path)
-      embed()
+      self.env, self.robot = adapy.initialize(attach_viewer='qtcoin', sim=False, env_path = env_path)
+      #embed()
 
       self.manip = self.robot.arm
       inds, pos = self.robot.configurations.get_configuration('home')
@@ -281,7 +281,13 @@ class ADAmanipulationTester:
       br = tf.TransformBroadcaster()
       t = RepeatedTimer(0.5, publishTf, br, self.robot, "/base_link")
       t.start() 
-      rospy.spin()    
+      trans = self.glass.GetTransform()
+      trans[0,3] = 6.47190332e-01
+      trans[1,3] = 0
+      trans[2,3] = 7.46739120e-01
+      self.glass.SetTransform(trans)
+
+      #rospy.spin()    
 
   def getVelocitiesTrajectory(self, cartesian_vels):
       jac = self.robot.arm.CalculateJacobian()
@@ -310,7 +316,7 @@ class ADAmanipulationTester:
           grasp_chains = glassUtils.glass_grasp(self.robot, self.glass, self.manip)
 
           self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
-
+          #embed()
 
           self.robot.PlanToTSR(self.robot.tsrlibrary(self.glass, 'grasp'))
 
@@ -466,3 +472,4 @@ class ADAmanipulationTester:
 if __name__ == "__main__":
     adaManipulationTester = ADAmanipulationTester()
     adaManipulationTester.initSimple() 
+    adaManipulationTester.planAndExecuteTrajectorySimple()
