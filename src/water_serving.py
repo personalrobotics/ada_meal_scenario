@@ -150,8 +150,9 @@ class ADAmanipulationTester:
                 if(self.MODE == self.UPDATING_POSE):
                         print 'detected ', marker.ns
                         self.numOfUpdateCalls = self.numOfUpdateCalls + 1
-                        object_world_pose[2,3] = object_world_pose[2,3] + 0.02
-                        object_world_pose[0,3] = object_world_pose[0,3] + 0.01 #make the glass a little closer so that it succeeds
+                        object_world_pose[1,3] = object_world_pose[1,3] - 0.02
+                        object_world_pose[2,3] = object_world_pose[2,3] - 0.01
+                        object_world_pose[0,3] = object_world_pose[0,3] + 0.04 #make the glass a little closer so that it succeeds
                         self.glass.SetTransform(np.asarray(object_world_pose))
                         #embed()
                         #exit()
@@ -192,7 +193,7 @@ class ADAmanipulationTester:
       self.Initialized = False
 
       rospy.init_node('ada_meal_scenario', anonymous = True)
-      env_path = '/environments/tablewithglass.env.xml'
+      env_path = '/environments/tablewithglass_meal.env.xml'
 
       openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Debug)
       openravepy.misc.InitOpenRAVELogging();
@@ -216,6 +217,9 @@ class ADAmanipulationTester:
 
       # self.glass.SetTransform(glass_pose)
       self.table = self.env.GetKinBody('table')
+      trans = self.table.GetTransform()
+      trans[2,3] = trans[2,3] 
+      self.table.SetTransform(trans)
 
       self.glass = self.env.GetKinBody('glass')
       glass_start_pose= numpy.eye(4)
@@ -234,7 +238,7 @@ class ADAmanipulationTester:
       ViewTopTrans = ViewTopObj.GetTransform()
 
       prpy.rave.disable_padding(self.glass, False)
-      #self.glass.GetLink('padding_glass').SetVisible(False)
+      self.glass.GetLink('padding_glass').SetVisible(False)
 
       self.numOfGrasps = 0
       self.numOfUpdateCalls = 100
@@ -261,6 +265,7 @@ class ADAmanipulationTester:
  
  
       self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner)      
+      prpy.rave.disable_padding(self.glass, False)
 
 
       self.robot.arm.hand.OpenHand()
@@ -287,7 +292,7 @@ class ADAmanipulationTester:
       trans[2,3] = 7.46739120e-01
       self.glass.SetTransform(trans)
 
-      #rospy.spin()    
+      rospy.spin()    
 
   def getVelocitiesTrajectory(self, cartesian_vels):
       jac = self.robot.arm.CalculateJacobian()
@@ -308,19 +313,23 @@ class ADAmanipulationTester:
           #res =  openravepy.planningutils.SmoothTrajectory(traj,1, 1, 'ParabolicSmoother', '')
           #self.controller.SetPath(traj)
           defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
-
-
           prpy.rave.disable_padding(self.glass, False)
 
-        
+
+
+          #print "23542345234123423432432432432"
           grasp_chains = glassUtils.glass_grasp(self.robot, self.glass, self.manip)
 
           self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
           #embed()
-
+          #embed()
+          #exit()
           self.robot.PlanToTSR(self.robot.tsrlibrary(self.glass, 'grasp'))
 
+
+
           #self.robot.PlanToTSR(grasp_chains)
+          #print "111111111111111111111111111111"
 
           reached = False
           distThres = 0.4
@@ -341,7 +350,7 @@ class ADAmanipulationTester:
 
                   #self.robot.Grab(self.glass)
                   #time.sleep(4.0)
-
+ 
           reached = False
           activedofs = [i for i in range(8)]
           self.robot.SetActiveDOFs(activedofs)
@@ -370,10 +379,11 @@ class ADAmanipulationTester:
                     time.sleep(1)
                     
                     print 'starting to plan configuration'
+                    #embed()
                     self.manip.PlanToConfiguration(liftConfiguration1)
                     time.sleep(3)
                     reached = True
-
+                  
 
                 self.manip.PlanToConfiguration(liftConfiguration2)
                 #time.sleep(1)
@@ -390,12 +400,12 @@ class ADAmanipulationTester:
                 time.sleep(3)
                 self.robot.SetDOFVelocityLimits(defaultVelocityLimits)
                 #embed()
-                print '11111111111111111111111111111111111111111'
+                #print '11111111111111111111111111111111111111111'
                 self.manip.PlanToConfiguration(liftConfiguration1)
                 self.returnGlass_subtask.succeed()
                 self.pub.publish(str(self.tasklist))
                 time.sleep(6)
-                print('222222222222222222222222222222222222')
+                #print('222222222222222222222222222222222222')
                 self.robot.SetDOFVelocityLimits(slowVelocityLimits)
                 #embed()
                 with prpy.rave.Disabled(self.glass):
@@ -472,4 +482,4 @@ class ADAmanipulationTester:
 if __name__ == "__main__":
     adaManipulationTester = ADAmanipulationTester()
     adaManipulationTester.initSimple() 
-    adaManipulationTester.planAndExecuteTrajectorySimple()
+    #adaManipulationTester.planAndExecuteTrajectorySimple()

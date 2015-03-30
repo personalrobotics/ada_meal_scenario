@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import Tkinter as tk
-
+import json
 import numpy
 #import roslib
 #mport rospy
@@ -50,14 +50,16 @@ readyToServeConfiguration =  np.asarray([ 0.59867355, -1.39080925, -0.65546094, 
 servingConfiguration = np.asarray([ 0.56979876, -1.40909664, -0.68818586,  0.9805578 , -1.22807706,
         0.58785866])
 
-lookingAtFaceConfiguration  = np.asarray([-0.82871048, -1.22910956, -0.62851101,  1.32327708, -0.91986782,
-        1.98253541])
+lookingAtFaceConfiguration = np.asarray([ 0.37537415, -0.81812309, -0.06833738,  1.13049803, -1.11502733,1.96230524])
 
-lookingAtPlateConfiguration = np.asarray([ 0.81812309, -1.13478492,  0.36286169,  2.67987402, -1.52438635,
-       -0.44029899])
+lookingAtPlateConfiguration = np.asarray([0.81812309, -1.14344739,  0.36382416,  2.64179402, -1.37920679, -0.55691865])
 
 slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
+defaultEndEffectorPose = np.asarray([[-0.00947845,  0.02440905, -0.99965712,  0.65161017],
+                                          [-0.98453928,  0.17463525,  0.01359925,  0.01263427],
+                                          [ 0.17490731,  0.9843306 ,  0.0223764 ,  1.10983745],
+                                          [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 
 
@@ -65,7 +67,7 @@ class ADAmanipulationTester:
   
   #Finite State Machine
   ROBOT_STATE = "INITIAL"
-
+  plateDetectedTimes = 1
   def addWaterServingTask(self):
       self.waterServing_task = self.tasklist.add_task('WaterServing')
       self.findGlass_subtask = self.waterServing_task.add_task('Find Glass')
@@ -87,22 +89,19 @@ class ADAmanipulationTester:
 
       openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Debug)
       openravepy.misc.InitOpenRAVELogging();
-      self.env, self.robot = adapy.initialize(attach_viewer='rviz', sim=False, env_path = env_path)
+      self.env, self.robot = adapy.initialize(attach_viewer='qtcoin', sim=False, env_path = env_path)
       #embed()
 
       self.manip = self.robot.arm
       inds, pos = self.robot.configurations.get_configuration('home')
       pos[1] = -1.57;
       pos[2] = 0;
-      #self.robot.SetDOFValues(pos, inds, openravepy.KinBody.CheckLimitsAction.Nothing)
       self.robot.SetDOFValues(self.robot.GetDOFValues())
 
       # find the ordata
       rospack = rospkg.RosPack()
       file_root = rospack.get_path('pr_ordata')
-      #file_root = rospack.get_path('ada_description')
 
-      # self.glass.SetTransform(glass_pose)
       self.table = self.env.GetKinBody('table')
 
       robot_pose = numpy.array([[1, 0, 0, 0.409],[0, 1, 0, 0.338],[0, 0, 1, 0.795],[0, 0, 0, 1]])
@@ -117,15 +116,11 @@ class ADAmanipulationTester:
       ViewTopObj = self.env.GetKinBody('ViewTop')
       ViewTopTrans = ViewTopObj.GetTransform()
 
-      #prpy.rave.disable_padding(self.glass, False)
-      #self.glass.GetLink('padding_glass').SetVisible(False)
-
       self.numOfGrasps = 0
       self.numOfUpdateCalls = 100
 
 
       viewer = self.env.GetViewer()
-      #viewer.SetCamera(ViewTopTrans)
 
       self.trajectoryPlanned = True
 
@@ -133,121 +128,103 @@ class ADAmanipulationTester:
       # tf listener for querying transforms
       self.tfListener = tf.TransformListener()
 
-
-
- 
       self.manip = self.robot.arm
       #self.robot.SetActiveManipulator(manip)
       activedofs = [i for i in range(6)]
       self.robot.SetActiveDOFs(activedofs)
       self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner)      
 
-      #self.manip.PlanToConfiguration(startConfiguration)
-      #time.sleep(5)
+
       self.Initialized = True
 
       self.pub = rospy.Publisher('ada_tasks',String, queue_size=10)
-      #embed()
+      self.sub = rospy.Subscriber("/perception/morsel_detection", String, self._MorselDetectionCallback, queue_size=1)
 
       self.tasklist = TaskLogger()  
       self.addWaterServingTask()
 
-      
-      #test greedy_ik_planner
+      self.ball=self.env.ReadKinBodyURI('objects/smallsphere.kinbody.xml')
+      self.ball.SetName('smallsphere')
+      self.env.Add(self.ball)
 
-      #self.robot.planner = prpy.planning.Sequence(self.robot.greedy_ik_planner) 
-      iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK");
-      #  #embed()
       self.manip = self.robot.arm
-      self.manip.SetIKSolver(iksolver)
+      #self.manip.SetIKSolver(iksolver)
 
       self.statePub = rospy.Publisher('ROBOT_STATE', String, queue_size=10)
       #rospy.init_node('Robot State')
-      self.rospyRate = rospy.Rate(33.333) # 10hz
-      #embed()
-      #self.manip.PlanToConfiguration(readyToServePosition)
-      # values = self.robot.GetActiveDOFValues()
-      # for i in range(0, self.robot.GetActiveDOF()):
-      #         if (values[i]<-numpy.pi):
-      #              values[i] = 2*numpy.pi + values[i]
-      #         elif(values[i]>numpy.pi):
-      #               values[i] = -2*numpy.pi+values[i]
-      # self.robot.SetActiveDOFValues(values)
-      # #embed()
-      # traj = self.manip.PlanToEndEffectorOffset([0.0,0.0,-1.0],0.1)
-      # time.sleep(3)
-      # traj = self.manip.PlanToEndEffectorOffset([0.0,0.0,1.0],0.1)
-      #embed()
-      #rospy.spin()  
+      self.rospyRate = rospy.Rate(33.33) # 10hz
+
       self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
       self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
       self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
-      time.sleep(6)
+      time.sleep(3)
+
+      self.bite_detected = False
 
       self.ROBOT_STATE = "LOOKING_AT_FACE"
       self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
   def lookingAtPlate(self):
-      #get plate recognition
-      time.sleep(5)
-
-      self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
+      if(self.bite_detected == True):
+          print "registering ball pose"
+          self.ball.SetTransform(self.bite_world_pose)
+          self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
 
   def lookingAtFace(self):
 
-      #get face recognition
-      time.sleep(5)
 
+      #get face recognition
+      self.bite_detected = False
       self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
       self.statePub.publish(adaManipulationTester.ROBOT_STATE)
       self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
-      time.sleep(4)
+      time.sleep(3)
       self.ROBOT_STATE = "LOOKING_AT_PLATE"
       self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
+  def _MorselDetectionCallback(self, msg):
+      obj =  json.loads(msg.data)
+      arr = obj['pts3d']
+      pos = np.asarray(arr)
+      #embed()
+      if(pos is None) or(len(pos)==0) or (self.ROBOT_STATE!="LOOKING_AT_PLATE"):
+          return
+      else:
+        #self.plateDetectedTimes = self.plateDetectedTimes + 1
+        relative_pos = pos[0]
+        relative_pose = np.eye(4)
+        relative_pose[0,3] = relative_pos[0] 
+        relative_pose[1,3] = relative_pos[1]
+        relative_pose[2,3] = relative_pos[2]
+        world_camera = self.robot.GetLinks()[7].GetTransform()
+        self.bite_world_pose = np.dot(world_camera,relative_pose)
+        self.bite_detected = True
+
+
+        
 
   def executeTrajectory(self):    
-          #res =  openravepy.planningutils.SmoothTrajectory(traj,1, 1, 'ParabolicSmoother', '')
-          #self.controller.SetPath(traj)
 
           defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
 
 
           self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
-            
-          #self.manip.PlanToConfiguration(startConfiguration)
-          #embed()
-          #time.sleep(3)
-          self.manip.PlanToConfiguration(readyToGraspConfiguration)
+
+          endEffectorPose = defaultEndEffectorPose
+          endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.08
+          endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
+          self.manip.PlanToEndEffectorPose(endEffectorPose)
           time.sleep(3)
-          #embed()
- 
-          self.robot.SetDOFVelocityLimits(slowVelocityLimits)
-          self.robot.planner = prpy.planning.Sequence(self.robot.greedy_ik_planner) 
-          for i in range(0, self.robot.GetActiveDOF()):
-              values = self.robot.GetActiveDOFValues()
-              if (values[i]<-numpy.pi):
-                    values[i] = 2*numpy.pi + values[i]
-              elif(values[i]>numpy.pi):
-                     values[i] = -2*numpy.pi+values[i]
-          self.robot.SetActiveDOFValues(values)
-          self.manip.PlanToEndEffectorOffset([0,0,-1],0.18)
+
+
+          self.manip.PlanToEndEffectorOffset([0,0,-1],0.22)
           time.sleep(2)
-          self.manip.PlanToEndEffectorOffset([0,0,1],0.18)
-          time.sleep(4)
-          self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
-          self.robot.SetDOFVelocityLimits(defaultVelocityLimits)
-          self.manip.PlanToConfiguration(readyToServeConfiguration)
+          self.manip.PlanToEndEffectorOffset([0,0,1],0.22)
           time.sleep(2)
-          self.robot.SetDOFVelocityLimits(slowVelocityLimits)
           self.manip.PlanToConfiguration(servingConfiguration)
-          time.sleep(8)
-          self.manip.PlanToConfiguration(readyToServeConfiguration)
-          time.sleep(3)
-          self.robot.SetDOFVelocityLimits(defaultVelocityLimits)
-          self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
-          time.sleep(4)
+          time.sleep(6)
+
   
           print str(self.tasklist)
           if(self.waterServing_task.is_complete()):
@@ -272,10 +249,3 @@ if __name__ == "__main__":
 
       adaManipulationTester.statePub.publish(adaManipulationTester.ROBOT_STATE)
       adaManipulationTester.rospyRate.sleep()
-    #adaManipulationTester.planAndExecuteTrajectorySimple()
-    #adaManipulationTester.robot.SetActiveDOFs([0,1,2,3,4,5,6,7]) #have to do that, otherwise get an error from roscontroller
-  
-    
-    #embed()
-    #adaManipulationTester.initSimple() 
-    #adaManipulationTester.planAndExecuteTrajectorySimple()
