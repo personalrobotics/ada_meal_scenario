@@ -37,24 +37,7 @@ from prpy.tsr.tsr import *
 
 from tasklogger import TaskLogger
 
-startConfiguration = np.asarray([ 1.83548311, -1.74693327, -0.65738594,  0.9805578 , -1.22807706,
-        1.55532642])
 
-#readyToGraspConfiguration = np.asarray([ 1.59678399, -1.0000351 ,  0.14533722,  0.9793679 , -1.22807706,
-#        1.55532642])
-readyToGraspConfiguration = np.asarray([  1.71132122e+00,  -4.20611407e-01,   7.18985850e-01, 9.59137999e-01,  -1.12216727e+00,   1.42323670e+00])
-
-
-readyToServeConfiguration =  np.asarray([ 0.59867355, -1.39080925, -0.65546094,  0.9805578 , -1.22807706,
-        1.55532642])
-
-
-servingConfiguration = np.asarray([ 0.56979876, -1.40909664, -0.68818586,  0.9805578 , -1.22807706,
-        0.58785866])
-
-lookingAtFaceConfiguration = np.asarray([ 0.37537415, -0.81812309, -0.06833738,  1.13049803, -1.11502733,1.96230524])
-
-lookingAtPlateConfiguration = np.asarray([0.81812309, -1.14344739,  0.36382416,  2.64179402, -1.37920679, -0.55691865])
 
 slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
