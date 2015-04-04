@@ -169,10 +169,21 @@ class ADAmanipulationTester:
     #exit()
     self.manip = self.robot.arm
 
-    self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
-    time.sleep(3)
+    #load trajectories
+    folderPath = os.path.dirname(os.path.abspath(os.path.join(__file__, os.pardir)))
+    self.traj_lookingAtFace = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_lookingAtFace.xml")   
+    self.traj_lookingAtPlate = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_lookingAtPlate.xml")   
+    self.traj_serving = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_serving.xml")   
 
 
+    self.robot.ExecuteTrajectory(self.traj_lookingAtFace)
+    time.sleep(4)
+    #embed()
+    #self.robot.planner.PlanToConfiguration(self.robot,lookingAtFaceConfiguration)
+    #time.sleep(3)
+    #prpy.rave.save_trajectory(new_traj, "traj_lookingAtFace.xml")
+    #embed()
+  
     iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
     self.manip.SetIKSolver(iksolver)
     #embed()
@@ -193,7 +204,8 @@ class ADAmanipulationTester:
     self.bite_detected = False
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
-    self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
+    self.robot.ExecuteTrajectory(self.traj_lookingAtPlate)
+    #self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
     time.sleep(3)
     #embed()
     self.ROBOT_STATE = "LOOKING_AT_PLATE"
@@ -223,12 +235,6 @@ class ADAmanipulationTester:
   def executeTrajectory(self):    
     defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
     
-
-    #embed()
-    #self.manip.PlanToEndEffectorPose(defaultEndEffectorPose)
-    #self.manip.PlanToConfiguration(readyToGraspConfiguration)
-    #defaultEndEffectorPose = self.manip.GetEndEffectorTransform()
-    
     endEffectorPose = defaultEndEffectorPose.copy()
     endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.09
     endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
@@ -236,7 +242,7 @@ class ADAmanipulationTester:
     
     self.manip.PlanToEndEffectorPose(endEffectorPose)
     time.sleep(4)
-    self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.vectorfield_planner, self.robot.cbirrt_planner) 
+    self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
 
     self.manip.PlanToEndEffectorOffset([0, 0, -1],0.07)
 
@@ -244,11 +250,16 @@ class ADAmanipulationTester:
     #embed()
     #self.manip.PlanToEndEffectorOffset([0,0,-1],0.15)
     #time.sleep(2)
-    self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
+    #self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
+    #traj_servingConfiguration = self.robot.planner.PlanToConfiguration(self.robot,servingConfiguration)
+    #time.sleep(3)
+    #prpy.rave.save_trajectory(traj_servingConfiguration, "traj_servingConfiguration.xml")
+    self.robot.ExecuteTrajectory(self.traj_serving)
+    #self.manip.PlanToConfiguration(servingConfiguration)
 
-    self.manip.PlanToConfiguration(servingConfiguration)
-    time.sleep(6)
-    print str(self.tasklist)
+
+    time.sleep(5)
+    #print str(self.tasklist)
     if(self.waterServing_task.is_complete()):
       self.addWaterServingTask()
       self.pub.publish(str(self.tasklist))
