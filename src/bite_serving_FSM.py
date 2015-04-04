@@ -47,7 +47,7 @@ defaultEndEffectorPose = np.asarray([[ 0.04367424,  0.02037604, -0.99883801,  0.
         [ 0.03155207,  0.99926512,  0.02176437,  1.03388379],
         [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
-class ADAmanipulationTester:
+class AdaBiteServing(object):
   
   #Finite State Machine
   ROBOT_STATE = "INITIAL"
@@ -136,7 +136,7 @@ class ADAmanipulationTester:
     self.rospyRate = rospy.Rate(33.33) # 10hz
 
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
-    self.statePub.publish(adaManipulationTester.ROBOT_STATE)
+    self.statePub.publish(adaBiteServing.ROBOT_STATE)
 
     self.manip = self.robot.arm
 
@@ -157,7 +157,7 @@ class ADAmanipulationTester:
     self.bite_detected = False
 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
-    self.statePub.publish(adaManipulationTester.ROBOT_STATE)
+    self.statePub.publish(adaBiteServing.ROBOT_STATE)
     #embed()
 
   def lookingAtPlate(self):
@@ -170,12 +170,12 @@ class ADAmanipulationTester:
     #get face recognition
     self.bite_detected = False
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
-    self.statePub.publish(adaManipulationTester.ROBOT_STATE)
+    self.statePub.publish(adaBiteServing.ROBOT_STATE)
     self.robot.ExecuteTrajectory(self.traj_lookingAtPlate)
     time.sleep(3)
     #embed()
     self.ROBOT_STATE = "LOOKING_AT_PLATE"
-    self.statePub.publish(adaManipulationTester.ROBOT_STATE)
+    self.statePub.publish(adaBiteServing.ROBOT_STATE)
 
   def _MorselDetectionCallback(self, msg):
     obj =  json.loads(msg.data)
@@ -225,17 +225,17 @@ class ADAmanipulationTester:
 
   
 if __name__ == "__main__":
-  adaManipulationTester = ADAmanipulationTester()
+  adaBiteServing = AdaBiteServing()
   while not rospy.is_shutdown():
-    if(adaManipulationTester.ROBOT_STATE == "INITIAL"):
-      adaManipulationTester.initSimple()
-    elif(adaManipulationTester.ROBOT_STATE == "LOOKING_AT_FACE"):
-      adaManipulationTester.lookingAtFace()
-    elif(adaManipulationTester.ROBOT_STATE == "LOOKING_AT_PLATE"):
-      adaManipulationTester.lookingAtPlate()
-    elif(adaManipulationTester.ROBOT_STATE == "EXECUTING_TRAJECTORY"):
-      adaManipulationTester.executeTrajectory()
+    if(adaBiteServing.ROBOT_STATE == "INITIAL"):
+      adaBiteServing.initSimple()
+    elif(adaBiteServing.ROBOT_STATE == "LOOKING_AT_FACE"):
+      adaBiteServing.lookingAtFace()
+    elif(adaBiteServing.ROBOT_STATE == "LOOKING_AT_PLATE"):
+      adaBiteServing.lookingAtPlate()
+    elif(adaBiteServing.ROBOT_STATE == "EXECUTING_TRAJECTORY"):
+      adaBiteServing.executeTrajectory()
     else:
       print "Error: Unknown ROBOT_STATE"
-  adaManipulationTester.statePub.publish(adaManipulationTester.ROBOT_STATE)
-  adaManipulationTester.rospyRate.sleep()
+  adaBiteServing.statePub.publish(adaBiteServing.ROBOT_STATE)
+  adaBiteServing.rospyRate.sleep()
