@@ -243,19 +243,12 @@ class ADAmanipulationTester:
     self.manip.PlanToEndEffectorPose(endEffectorPose)
     time.sleep(4)
     self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-
+    #with prpy.rave.Disabled(self.robot, self.table):
     self.manip.PlanToEndEffectorOffset([0, 0, -1],0.07)
 
     time.sleep(2)
-    #embed()
-    #self.manip.PlanToEndEffectorOffset([0,0,-1],0.15)
-    #time.sleep(2)
-    #self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
-    #traj_servingConfiguration = self.robot.planner.PlanToConfiguration(self.robot,servingConfiguration)
-    #time.sleep(3)
-    #prpy.rave.save_trajectory(traj_servingConfiguration, "traj_servingConfiguration.xml")
+
     self.robot.ExecuteTrajectory(self.traj_serving)
-    #self.manip.PlanToConfiguration(servingConfiguration)
 
 
     time.sleep(5)
