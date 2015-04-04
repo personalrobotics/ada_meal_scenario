@@ -155,8 +155,15 @@ class ADAmanipulationTester:
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
+
+    #exit()
+    self.manip = self.robot.arm
+
     self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
     time.sleep(3)
+
+    iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK");
+    self.manip.SetIKSolver(iksolver)
 
     self.bite_detected = False
 
@@ -202,23 +209,27 @@ class ADAmanipulationTester:
 
   def executeTrajectory(self):    
     defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
-    self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
+    
     endEffectorPose = defaultEndEffectorPose
     endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.08
     endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
     self.manip.PlanToEndEffectorPose(endEffectorPose)
     time.sleep(3)
-    self.manip.PlanToEndEffectorOffset([0,0,-1],0.22)
+    #embed()
+    self.robot.planner = prpy.planning.Sequence(self.robot.vectorfield_planner, self.robot.greedyik_planner, self.robot.cbirrt_planner) 
+    self.manip.PlanToEndEffectorOffset([0,0,-1],0.15)
     time.sleep(2)
-    self.manip.PlanToEndEffectorOffset([0,0,1],0.22)
-    time.sleep(2)
+    self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
+
     self.manip.PlanToConfiguration(servingConfiguration)
     time.sleep(6)
     print str(self.tasklist)
     if(self.waterServing_task.is_complete()):
       self.addWaterServingTask()
       self.pub.publish(str(self.tasklist))
+    self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
+
   
 if __name__ == "__main__":
   adaManipulationTester = ADAmanipulationTester()
