@@ -40,8 +40,10 @@ from tasklogger import TaskLogger
 startConfiguration = np.asarray([ 1.83548311, -1.74693327, -0.65738594,  0.9805578 , -1.22807706,
         1.55532642])
 
-readyToGraspConfiguration = np.asarray([ 1.59678399, -1.0000351 ,  0.14533722,  0.9793679 , -1.22807706,
-        1.55532642])
+#readyToGraspConfiguration = np.asarray([ 1.59678399, -1.0000351 ,  0.14533722,  0.9793679 , -1.22807706,
+#        1.55532642])
+readyToGraspConfiguration = np.asarray([  1.71132122e+00,  -4.20611407e-01,   7.18985850e-01, 9.59137999e-01,  -1.12216727e+00,   1.42323670e+00])
+
 
 readyToServeConfiguration =  np.asarray([ 0.59867355, -1.39080925, -0.65546094,  0.9805578 , -1.22807706,
         1.55532642])
@@ -56,10 +58,18 @@ lookingAtPlateConfiguration = np.asarray([0.81812309, -1.14344739,  0.36382416, 
 
 slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
-defaultEndEffectorPose = np.asarray([[-0.00947845,  0.02440905, -0.99965712,  0.65161017],
-                                          [-0.98453928,  0.17463525,  0.01359925,  0.01263427],
-                                          [ 0.17490731,  0.9843306 ,  0.0223764 ,  1.10983745],
-                                          [ 0.        ,  0.        ,  0.        ,  1.        ]])
+#defaultEndEffectorPose = np.asarray([[-0.00947845,  0.02440905, -0.99965712,  0.65161017],
+#                                          [-0.98453928,  0.17463525,  0.01359925,  0.01263427],
+#                                          [ 0.17490731,  0.9843306 ,  0.0223764 ,  1.10983745],
+#                                          [ 0.        ,  0.        ,  0.        ,  1.        ]])
+defaultEndEffectorPose = np.asarray([[ 0.04367424,  0.02037604, -0.99883801,  0.65296864],
+        [-0.99854746,  0.03246594, -0.04299924, -0.00927059],
+        [ 0.03155207,  0.99926512,  0.02176437,  1.03388379],
+        [ 0.        ,  0.        ,  0.        ,  1.        ]])
+#defaultEndEffectorPose = np.asarray([[-0.07987843,  0.13887   , -0.98708387,  0.39577101],
+       # [-0.99675664, -0.02084251,  0.07772891,  0.02984476],
+       # [-0.00977909,  0.99009127,  0.14008446,  1.01364661],
+       # [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 class ADAmanipulationTester:
   
@@ -155,20 +165,22 @@ class ADAmanipulationTester:
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
-
+    #embed()
     #exit()
     self.manip = self.robot.arm
 
     self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
     time.sleep(3)
 
-    iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK");
-    self.manip.SetIKSolver(iksolver)
 
+    iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
+    self.manip.SetIKSolver(iksolver)
+    #embed()
     self.bite_detected = False
 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
+    #embed()
 
   def lookingAtPlate(self):
     if(self.bite_detected == True):
@@ -183,6 +195,7 @@ class ADAmanipulationTester:
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
     self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
     time.sleep(3)
+    #embed()
     self.ROBOT_STATE = "LOOKING_AT_PLATE"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
@@ -210,15 +223,27 @@ class ADAmanipulationTester:
   def executeTrajectory(self):    
     defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
     
-    endEffectorPose = defaultEndEffectorPose
-    endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.08
-    endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
-    self.manip.PlanToEndEffectorPose(endEffectorPose)
-    time.sleep(3)
+
     #embed()
-    self.robot.planner = prpy.planning.Sequence(self.robot.vectorfield_planner, self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-    self.manip.PlanToEndEffectorOffset([0,0,-1],0.15)
+    #self.manip.PlanToEndEffectorPose(defaultEndEffectorPose)
+    #self.manip.PlanToConfiguration(readyToGraspConfiguration)
+    #defaultEndEffectorPose = self.manip.GetEndEffectorTransform()
+    
+    endEffectorPose = defaultEndEffectorPose.copy()
+    endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.09
+    endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
+    endEffectorPose[2,3] = 0.95
+    
+    self.manip.PlanToEndEffectorPose(endEffectorPose)
+    time.sleep(4)
+    self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.vectorfield_planner, self.robot.cbirrt_planner) 
+
+    self.manip.PlanToEndEffectorOffset([0, 0, -1],0.07)
+
     time.sleep(2)
+    #embed()
+    #self.manip.PlanToEndEffectorOffset([0,0,-1],0.15)
+    #time.sleep(2)
     self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
 
     self.manip.PlanToConfiguration(servingConfiguration)
