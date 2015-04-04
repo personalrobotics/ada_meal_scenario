@@ -41,18 +41,11 @@ from tasklogger import TaskLogger
 
 slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
-#defaultEndEffectorPose = np.asarray([[-0.00947845,  0.02440905, -0.99965712,  0.65161017],
-#                                          [-0.98453928,  0.17463525,  0.01359925,  0.01263427],
-#                                          [ 0.17490731,  0.9843306 ,  0.0223764 ,  1.10983745],
-#                                          [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
 defaultEndEffectorPose = np.asarray([[ 0.04367424,  0.02037604, -0.99883801,  0.65296864],
         [-0.99854746,  0.03246594, -0.04299924, -0.00927059],
         [ 0.03155207,  0.99926512,  0.02176437,  1.03388379],
         [ 0.        ,  0.        ,  0.        ,  1.        ]])
-#defaultEndEffectorPose = np.asarray([[-0.07987843,  0.13887   , -0.98708387,  0.39577101],
-       # [-0.99675664, -0.02084251,  0.07772891,  0.02984476],
-       # [-0.00977909,  0.99009127,  0.14008446,  1.01364661],
-       # [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 class ADAmanipulationTester:
   
@@ -84,10 +77,7 @@ class ADAmanipulationTester:
     #embed()
 
     self.manip = self.robot.arm
-    inds, pos = self.robot.configurations.get_configuration('home')
-    pos[1] = -1.57;
-    pos[2] = 0;
-    self.robot.SetDOFValues(self.robot.GetDOFValues())
+
 
     # find the ordata
     rospack = rospkg.RosPack()
@@ -148,8 +138,6 @@ class ADAmanipulationTester:
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
 
-    #embed()
-    #exit()
     self.manip = self.robot.arm
 
     #load trajectories
@@ -161,11 +149,7 @@ class ADAmanipulationTester:
 
     self.robot.ExecuteTrajectory(self.traj_lookingAtFace)
     time.sleep(4)
-    #embed()
-    #self.robot.planner.PlanToConfiguration(self.robot,lookingAtFaceConfiguration)
-    #time.sleep(3)
-    #prpy.rave.save_trajectory(new_traj, "traj_lookingAtFace.xml")
-    #embed()
+
   
     iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
     self.manip.SetIKSolver(iksolver)
@@ -188,7 +172,6 @@ class ADAmanipulationTester:
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
     self.robot.ExecuteTrajectory(self.traj_lookingAtPlate)
-    #self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
     time.sleep(3)
     #embed()
     self.ROBOT_STATE = "LOOKING_AT_PLATE"
@@ -202,7 +185,6 @@ class ADAmanipulationTester:
     if(pos is None) or(len(pos)==0) or (self.ROBOT_STATE!="LOOKING_AT_PLATE"):
       return
     else:
-      #self.plateDetectedTimes = self.plateDetectedTimes + 1
       relative_pos = pos[0]
       relative_pose = np.eye(4)
       relative_pose[0,3] = relative_pos[0] 
@@ -226,7 +208,6 @@ class ADAmanipulationTester:
     self.manip.PlanToEndEffectorPose(endEffectorPose)
     time.sleep(4)
     self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-    #with prpy.rave.Disabled(self.robot, self.table):
     self.manip.PlanToEndEffectorOffset([0, 0, -1],0.07)
 
     time.sleep(2)
