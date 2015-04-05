@@ -92,7 +92,7 @@ class AdaBiteServing(object):
     #self.robot.SetActiveManipulator(manip)
     activedofs = [i for i in range(6)]
     self.robot.SetActiveDOFs(activedofs)
-    self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner)      
+    #self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner)      
 
 
     self.Initialized = True
@@ -176,14 +176,14 @@ class AdaBiteServing(object):
     defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
     
     endEffectorPose = defaultEndEffectorPose.copy()
-    endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.09
-    endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
-    endEffectorPose[2,3] = 0.95
+    endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.11
+    endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.035
+    endEffectorPose[2,3] = 0.98
     
     self.manip.PlanToEndEffectorPose(endEffectorPose)
     time.sleep(4)
-    self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-    self.manip.PlanToEndEffectorOffset([0, 0, -1],0.07)
+    #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
+    self.manip.PlanToEndEffectorOffset([0, 0, -1],0.11)
 
     time.sleep(2)
 
@@ -195,7 +195,7 @@ class AdaBiteServing(object):
     if(self.waterServing_task.is_complete()):
       self.addWaterServingTask()
       self.pub.publish(str(self.tasklist))
-    self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
+    #self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
 
   
