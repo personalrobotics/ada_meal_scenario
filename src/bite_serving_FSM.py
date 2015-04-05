@@ -1,43 +1,23 @@
 #!/usr/bin/env python
-import Tkinter as tk
 import json
 import numpy
-#import roslib
-#mport rospy
 import openravepy
 import adapy
 import prpy
 import numpy as np
-import math
-from IPython import embed
+
+
 import tf
 import rospkg
-import sys
-
-from threading import Timer
-from time import sleep
 
 import os
 import time
 
 import rospy
-#from ar_track_alvar.msg import AlvarMarkers
-from visualization_msgs.msg import Marker, MarkerArray
-from tf.transformations import quaternion_matrix,quaternion_from_matrix
 
 from std_msgs.msg import String
-#rom TransformMatrix import *
-#from str2num import *
-
-import IPython
-
-from prpy.tsr.tsrlibrary import TSRFactory
-from prpy.tsr.tsr import *
-#from adapy.tsr import glass as glassUtils
 
 from tasklogger import TaskLogger
-
-
 
 slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
@@ -74,7 +54,6 @@ class AdaBiteServing(object):
     openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Debug)
     openravepy.misc.InitOpenRAVELogging();
     self.env, self.robot = adapy.initialize(attach_viewer='qtcoin', sim=False, env_path = env_path)
-    #embed()
     self.robot.SetActiveManipulator('Mico')
     self.manip = self.robot.GetActiveManipulator()
 
@@ -153,12 +132,10 @@ class AdaBiteServing(object):
   
     iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
     self.manip.SetIKSolver(iksolver)
-    embed()
     self.bite_detected = False
 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
     self.statePub.publish(adaBiteServing.ROBOT_STATE)
-    #embed()
 
   def lookingAtPlate(self):
     if(self.bite_detected == True):
@@ -173,7 +150,6 @@ class AdaBiteServing(object):
     self.statePub.publish(adaBiteServing.ROBOT_STATE)
     self.robot.ExecuteTrajectory(self.traj_lookingAtPlate)
     time.sleep(3)
-    #embed()
     self.ROBOT_STATE = "LOOKING_AT_PLATE"
     self.statePub.publish(adaBiteServing.ROBOT_STATE)
 
@@ -181,7 +157,6 @@ class AdaBiteServing(object):
     obj =  json.loads(msg.data)
     arr = obj['pts3d']
     pos = np.asarray(arr)
-    #embed()
     if(pos is None) or(len(pos)==0) or (self.ROBOT_STATE!="LOOKING_AT_PLATE"):
       return
     else:
