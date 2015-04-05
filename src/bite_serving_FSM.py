@@ -75,8 +75,8 @@ class AdaBiteServing(object):
     openravepy.misc.InitOpenRAVELogging();
     self.env, self.robot = adapy.initialize(attach_viewer='qtcoin', sim=False, env_path = env_path)
     #embed()
-
-    self.manip = self.robot.arm
+    self.robot.SetActiveManipulator('Mico')
+    self.manip = self.robot.GetActiveManipulator()
 
 
     # find the ordata
@@ -153,7 +153,7 @@ class AdaBiteServing(object):
   
     iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
     self.manip.SetIKSolver(iksolver)
-    #embed()
+    embed()
     self.bite_detected = False
 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
