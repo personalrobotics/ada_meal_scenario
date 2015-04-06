@@ -13,7 +13,7 @@ from IPython import embed
 import tf
 import rospkg
 import sys
-
+import logging
 import datetime as dt
 
 from threading import Timer
@@ -163,18 +163,26 @@ class ADAmanipulationTester:
     self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
     time.sleep(5)
 
+    #logger initialization
 
-	
+    prpy.logger.initialize_logging()
+    logger = logging.getLogger()
+    hdlr = logging.FileHandler('%s' % "output.txt")
+    formatter = logging.Formatter('%(asctime)s %(message)s', '%Y%m%d %H:%M:%S')
+     # date/time plus message
+    hdlr.setFormatter(formatter)
+    logger.addHandler(hdlr)
+
     self.f.write("lookingAtFace: ")
-    t1 = dt.datetime.now()
-    self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
-    t2 = dt.datetime.now()
-    timedelta = t2-t1
-    print timedelta.microseconds
+    #self.manip.PlanToConfiguration(lookingAtFaceConfiguration)
+
+    with prpy.util.Timer('PlanningToLookingAtFace'):
+       path = self.robot.PlanToConfiguration(lookingAtFaceConfiguration, execute = False)
+         
+    with prpy.util.Timer('MovingToLookingAtFace'):
+       path = self.robot.ExecutePath(path)
+
     time.sleep(3)
-    self.f.write(str(timedelta.microseconds))
-    self.f.write('\n')
-    
 
     #robot.GetActiveManipulator().SetIKSolver(iksolver)
     
@@ -201,13 +209,12 @@ class ADAmanipulationTester:
     self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
     self.f.write("lookingAtPlate: ")
-    t1 = dt.datetime.now()
-    self.manip.PlanToConfiguration(lookingAtPlateConfiguration)
-    t2 = dt.datetime.now()
-    timedelta = t2-t1
-    print timedelta.microseconds
-    self.f.write(str(timedelta.microseconds))
-    self.f.write('\n')
+    with prpy.util.Timer('PlanningToLookingAtPlateConfiguration'):
+       path = self.robot.PlanToConfiguration(lookingAtPlateConfiguration, execute = False)
+
+    with prpy.util.Timer('MovingToLookingAtPlateConfiguration'):
+       self.robot.ExecutePath(path)
+
     time.sleep(3)
     self.ROBOT_STATE = "LOOKING_AT_PLATE"
     self.statePub.publish(adaManipulationTester.ROBOT_STATE)
@@ -239,43 +246,32 @@ class ADAmanipulationTester:
     endEffectorPose = defaultEndEffectorPose
     endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.08
     endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.01
-    t1 = dt.datetime.now()
-    self.f.write("enfeffectorPose: ")
-    self.manip.PlanToEndEffectorPose(endEffectorPose)
-    t2 = dt.datetime.now()
-    timedelta = t2-t1
-    print timedelta.microseconds
-    self.f.write(str(timedelta.microseconds))
-    self.f.write('\n')
-    
+   
+    with prpy.util.Timer('PlanningToEndEffectorPose'):
+       path = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
+
+    with prpy.util.Timer('MovingToEndEffectorPose'):
+       self.robot.ExecutePath(path)
+  
     time.sleep(3)
-    t1 = dt.datetime.now()
-    self.f.write("offset: ")
-    self.manip.PlanToEndEffectorOffset(np.asarray([0,0,-1]),0.22)
-    t2 = dt.datetime.now()
-    timedelta = t2-t1
-    print timedelta.microseconds
-    self.f.write(str(timedelta.microseconds))
-    self.f.write('\n')
-    #time.sleep(3)
+    with prpy.util.Timer('PlanningToEndEffectorOffset'):
+       path = self.robot.PlanToEndEffectorOffset(np.asarray([0,0,-1]),0.22, execute = False)
+    with prpy.util.Timer('MovingToEndEffectorOffset'):
+       self.robot.ExecutePath(path)
     time.sleep(2)
-    t1 = dt.datetime.now()
-    self.f.write("offset: ")
-    self.manip.PlanToEndEffectorOffset(np.asarray([0,0,1]),0.22)
-    t2 = dt.datetime.now()
-    timedelta = t2-t1
-    print timedelta.microseconds
-    self.f.write(str(timedelta.microseconds))
-    self.f.write('\n')
+    with prpy.util.Timer('PlanningToEndEffectorOffset'):
+       path = self.manip.PlanToEndEffectorOffset(np.asarray([0,0,1]),0.22, execute = False)
+    with prpy.util.Timer('MovingToEndEffectorOffset'):
+       self.robot.ExecutePath(path)
+
     time.sleep(2)
-    t1 = dt.datetime.now()
     self.f.write("servingConfiguration: ")
-    self.manip.PlanToConfiguration(servingConfiguration)
-    t2 = dt.datetime.now()
-    timedelta = t2-t1
-    print timedelta.microseconds
-    self.f.write(str(timedelta.microseconds))
-    self.f.write('\n')
+    with prpy.util.Timer('PlanningToServingConfiguration'):
+       path = self.robot.PlanToConfiguration(servingConfiguration, execute = False)
+    with prpy.util.Timer('MovingToServingConfiguration'):
+       self.robot.ExecutePath(path)
+
+
     time.sleep(6)
     print str(self.tasklist)
     if(self.waterServing_task.is_complete()):
