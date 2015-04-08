@@ -1,17 +1,22 @@
-import argparse, logging, numpy, os, openravepy
+import adapy, argparse, logging, numpy, os, openravepy
 from catkin.find_in_workspaces import find_in_workspaces
+from actions.bite_serving import BiteServing
+from actions.bypassable_action import ActionException
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
 def setup(sim=False, viewer=None, debug=True):
 
-    env_base_path = find_in_workspaces(
+    data_base_path = find_in_workspaces(
         search_dirs=['share'],
         project=project_name,
-        path='environments',
-        first_match_only=True)[0]
-    env_path = os.join(env_base_path, 'table.env.xml')
+        path='data',
+        first_match_only=True)
+    if len(data_base_path) == 0:
+        raise Exception('Unable to find environment path. Did you source devel/setup.bash?')
+
+    env_path = os.path.join(data_base_path[0], 'environments', 'table.env.xml')
     
     # Initialize logging
     if debug:
@@ -24,7 +29,13 @@ def setup(sim=False, viewer=None, debug=True):
     env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
 
     # Set the active manipulator on the robot
+    # TODO: seems like all this should be in adapy and we should just do something like robot.manip.SetActive()
     robot.SetActiveManipulator('Mico')
+    robot.SetActiveDOFs(range(6))
+    manip = robot.GetActiveManipulator()
+    iksolver = openravepy.RaveCreateIkSolver(env, 'MloptIK')
+    manip.SetIKSolver(iksolver)
+    robot.manip = manip
 
     # Now set everything to the right location in the environment
     robot_pose = numpy.array([[1., 0., 0., 0.409],
@@ -34,21 +45,11 @@ def setup(sim=False, viewer=None, debug=True):
     with env:
         robot.SetTransform(robot_pose)
 
-    # Add a ball - TODO this should be done in the bite detection callback
-    object_base_path = find_in_workspaces(
-        search_dirs=['share'],
-        project=project_name,
-        path='objects',
-        first_match_only=True)[0]
-    ball_path = os.path.join(object_base_path, 'smallsphere.kinbody.xml')
-    ball = env.ReadKinBodyURI(ball_path)
-    env.Add(ball)
-
     return env, robot
 
 if __name__ == "__main__":
         
-    parser, args = task_helper.setupArgs()
+    parser = argparse.ArgumentParser('Ada meal scenario')
     parser.add_argument("--debug", action="store_true", help="Run with debug")
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
@@ -56,3 +57,13 @@ if __name__ == "__main__":
 
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
+
+    raw_input('Press enter to begin')
+    try:
+        action = BiteServing()
+        action.execute(robot, env)
+    except ActionException, e:
+        logger.info('Failed to complete bite serving: %s' % str(e))
+
+    import IPython
+    IPython.embed()

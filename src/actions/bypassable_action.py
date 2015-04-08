@@ -12,11 +12,8 @@ class BypassableAction(object):
         self.name = name
         self.bypass = bypass
 
-    def execute(self, publisher=None, *args, **kw_args):
+    def execute(self, *args, **kw_args):
         
-        if publisher is not None:
-            publisher.publish(self.name)
-
         if self.bypass:
             self._bypass(*args, **kw_args)
         else:

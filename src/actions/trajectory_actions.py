@@ -1,4 +1,5 @@
-import logging, prpy
+import logging, prpy, os
+import prpy.rave, prpy.util
 from bypassable_action import BypassableAction
 
 project_name = 'ada_meal_scenario'
@@ -25,6 +26,7 @@ class RunTrajectory(BypassableAction):
         if self.traj is None:
             self._load_traj(robot.GetEnv())
 
+        logger.info('Executing trajectory for action %s' % self.name)
         robot.ExecuteTrajectory(self.traj)
 
     def _bypass(self, robot):
@@ -44,7 +46,7 @@ class RunTrajectory(BypassableAction):
 
 class LookAtFace(RunTrajectory):
     
-    def __init__(self, bypass=bypass):
+    def __init__(self, bypass=False):
                 
         from catkin.find_in_workspaces import find_in_workspaces
         traj_path = find_in_workspaces(
@@ -57,12 +59,12 @@ class LookAtFace(RunTrajectory):
         
         trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_lookingAtFace.xml')
 
-        RunTrajectory.__init__("LOOKING_AT_FACE", trajfile, bypass=bypass)
+        RunTrajectory.__init__(self, "LOOKING_AT_FACE", trajfile, bypass=bypass)
 
     
 class LookAtPlate(RunTrajectory):
 
-    def __init__(self, bypass=bypass):
+    def __init__(self, bypass=False):
         
         from catkin.find_in_workspaces import find_in_workspaces
         traj_path = find_in_workspaces(
@@ -75,11 +77,11 @@ class LookAtPlate(RunTrajectory):
         
         trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_lookingAtPlate.xml')
 
-        RunTrajectory.__init__("LOOKING_AT_PLATE", trajfile, bypass=bypass)
+        RunTrajectory.__init__(self, "LOOKING_AT_PLATE", trajfile, bypass=bypass)
 
 class Serve(RunTrajectory):
 
-    def __init__(self, bypass=bypass):
+    def __init__(self, bypass=False):
         
         from catkin.find_in_workspaces import find_in_workspaces
         traj_path = find_in_workspaces(
@@ -92,5 +94,5 @@ class Serve(RunTrajectory):
         
         trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_serving.xml')
 
-        RunTrajectory.__init__("SERVING", trajfile, bypass=bypass)
+        RunTrajectory.__init__(self, "SERVING", trajfile, bypass=bypass)
 

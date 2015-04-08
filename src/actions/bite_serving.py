@@ -1,7 +1,7 @@
 from bypassable_action import BypassableAction
 from trajectory_actions import LookAtFace
-from detect_bite import DetectBite
-from get_bite import GetBite
+from detect_morsal import DetectMorsal
+from get_morsal import GetMorsal
 
 import logging
 logger = logging.getLogger('ada_meal_scenario')
@@ -17,12 +17,12 @@ class BiteServing(BypassableAction):
         action = LookAtFace(bypass = self.bypass)
         action.execute(robot)
         
-        # Detect bite
-        action = DetectBite(bypass = self.bypass)
+        # Detect morsal
+        action = DetectMorsal(bypass = True)#self.bypass)
         action.execute(robot)
         
         # Move to get object
-        action = GetBite(bypass = self.bypass)
+        action = GetMorsal(bypass = self.bypass)
         action.execute(robot)
 
         # Serve the morsal
