@@ -180,15 +180,19 @@ class AdaBiteServing(object):
     endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.035
     endEffectorPose[2,3] = 0.98
     
+
     path = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
-    self.robot.ExecutePath(path)
+    self.robot.ExecuteTrajectory(path)
 
     time.sleep(4)
     #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-    from IPython import embed
-    embed()
-    path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.11, execute = False)
-    self.robot.ExecutePath(path)
+    #from IPython import embed
+    #embed()
+    #from IPython import embed
+    #embed()
+    self.robot.planner = self.robot.vectorfield_planner
+    path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.03, execute = False)
+    self.robot.ExecuteTrajectory(path)
 
     time.sleep(2)
 
