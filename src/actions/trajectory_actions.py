@@ -1,6 +1,6 @@
 import logging, numpy, prpy, os
 import prpy.rave, prpy.util
-from bypassable_action import BypassableAction
+from bypassable_action import ActionException, BypassableAction
 from prpy.planning.base import PlanningError
 
 project_name = 'ada_meal_scenario'
