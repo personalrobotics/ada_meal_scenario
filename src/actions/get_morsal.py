@@ -9,12 +9,13 @@ class GetMorsal(BypassableAction):
         BypassableAction.__init__(self, 'EXECUTING_TRAJECTORY', bypass=bypass)
         
         
-    def _run(self, robot):
+    def _run(self, manip):
         """
         Execute a sequence of plans that pick up the morsal
-        @param robot The robot 
+        @param manip The manipulator
         """
 
+        robot = manip.GetRobot()
         env = robot.GetEnv()
         morsal = env.GetKinBody('morsal')
         if morsal is None:
@@ -34,8 +35,8 @@ class GetMorsal(BypassableAction):
 
         # Plan near morsal
         try:
-            with prpy.viz.RenderPoses([numpy.eye(4), desired_ee_pose, robot.manip.GetEndEffectorTransform()], env):
-                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
+            with prpy.viz.RenderPoses([desired_ee_pose], env):
+                path = manip.PlanToEndEffectorPose(desired_ee_pose, execute=False)
                 robot.ExecutePath(path)
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
@@ -44,9 +45,9 @@ class GetMorsal(BypassableAction):
         try:
             direction = numpy.array([0., 0., -1.])
             distance = 0.11
-            with prpy.viz.RenderVector(robot.manip.GetEndEffectorTransform()[:3,3],
+            with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
-                path = robot.PlanToEndEffectorOffset(direction=direction,
+                path = manip.PlanToEndEffectorOffset(direction=direction,
                                                  distance=0.11,
                                                  execute=False)  #TODO: add some tolerance
                 robot.ExecutePath(path)

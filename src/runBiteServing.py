@@ -1,4 +1,4 @@
-import adapy, argparse, logging, numpy, os, openravepy
+import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
 from catkin.find_in_workspaces import find_in_workspaces
 from actions.bite_serving import BiteServing
 from actions.bypassable_action import ActionException
@@ -24,12 +24,14 @@ def setup(sim=False, viewer=None, debug=True):
     else:
         openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Info)
     openravepy.misc.InitOpenRAVELogging()
+    prpy.logger.initialize_logging()
 
     # Load the environment
     env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
 
     # Set the active manipulator on the robot
-    # TODO: seems like all this should be in adapy and we should just do something like robot.manip.SetActive()
+    # TODO: seems like all this should be in adapy and 
+    # we should just do something like robot.manip.SetActive()
     robot.SetActiveManipulator('Mico')
     robot.SetActiveDOFs(range(6))
     manip = robot.GetActiveManipulator()
@@ -49,10 +51,13 @@ def setup(sim=False, viewer=None, debug=True):
 
 if __name__ == "__main__":
         
+    rospy.init_node('bite_serving_scenario', anonymous=True)
+
     parser = argparse.ArgumentParser('Ada meal scenario')
     parser.add_argument("--debug", action="store_true", help="Run with debug")
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
+    parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
     args = parser.parse_args()
 
     sim = not args.real
@@ -60,8 +65,9 @@ if __name__ == "__main__":
 
     raw_input('Press enter to begin')
     try:
+        manip = robot.GetActiveManipulator()
         action = BiteServing()
-        action.execute(robot, env)
+        action.execute(manip, env, detection_sim=args.detection_sim)
     except ActionException, e:
         logger.info('Failed to complete bite serving: %s' % str(e))
 

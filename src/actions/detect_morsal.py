@@ -1,41 +1,42 @@
 import numpy, os, rospy, time
-from bypassable_action import BypassableAction
-from trajectory_actions import LookAtPlate
+from bypassable_action import ActionException, BypassableAction
 from std_msgs.msg import String
 from catkin.find_in_workspaces import find_in_workspaces
+
+import logging
+logger = logging.getLogger('ada_meal_scenario')
 
 class DetectMorsal(BypassableAction):
 
     def __init__(self, bypass=False):
         BypassableAction.__init__(self, 'DetectBite', bypass=bypass)
 
-    def _run(self, robot):
+    def _run(self, robot, timeout=None):
         
-        # Move to look at plate
-        action = LookAtPlate(bypass = self.bypass)
-        action.execute(robot)
-
         m_detector = MorsalDetector(robot)
         m_detector.start()
 
         # Now wait for the morsal to be detected
         env = robot.GetEnv()
-        while not env.GetKinBody('morsal'):
-            time.sleep(1)
+        logger.info('Waiting to detect morsal')
+        start_time = time.time()
+        while not env.GetKinBody('morsal') and (timeout is None or time.time() - start_time < timeout):
+            time.sleep(1.0)
 
         m_detector.stop()
+
+        if not env.GetKinBody('morsal'):
+            raise ActionException(self, 'Failed to detect morsal.')
 
     def _bypass(self, robot):
 
         # Here we want to place the kinbody
         #  somewhere in the environment
         morsal_in_camera = numpy.eye(4)
-        morsal_in_camera[:3,3] = [0.1, 0., -0.25]
+        morsal_in_camera[:3,3] = [0.1, 0., 0.25]
                 
         m_detector = MorsalDetector(robot)
         m_detector.add_morsal(morsal_in_camera)
-
-        import IPython; IPython.embed()
 
 class MorsalDetector(object):
     

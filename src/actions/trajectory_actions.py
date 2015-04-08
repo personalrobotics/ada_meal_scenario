@@ -1,6 +1,7 @@
-import logging, prpy, os
+import logging, numpy, prpy, os
 import prpy.rave, prpy.util
 from bypassable_action import BypassableAction
+from prpy.planning.base import PlanningError
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -21,26 +22,45 @@ class RunTrajectory(BypassableAction):
     def _load_traj(self, env):
         self.traj = prpy.rave.load_trajectory(env, self.trajfile)
         
-    def _run(self, robot):
+    def _run(self, manip):
         
+        robot = manip.GetRobot()
+        env = robot.GetEnv()
+
         if self.traj is None:
-            self._load_traj(robot.GetEnv())
+            self._load_traj(env)
 
-        logger.info('Executing trajectory for action %s' % self.name)
-        robot.ExecuteTrajectory(self.traj)
 
-    def _bypass(self, robot):
+        cspec = self.traj.GetConfigurationSpecification()
+        first_wpt = self.traj.GetWaypoint(0)
+        first_config = cspec.ExtractJointValues(first_wpt, robot, manip.GetArmIndices())
+        current_config = manip.GetDOFValues()
         
+        # Plan to the start of the trajectory if we aren't already there
+        if numpy.linalg.norm(first_config - current_config) > 0.001: # TODO: What is the right epsilon
+            logger.info('Planning to start of trajectory for action %s' % self.name)
+            try:
+                manip.PlanToConfiguration(first_config)
+            except PlanningError, e:
+                raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
+
+        logger.info('Executing trajectory for action %s. Num points: %d' % (self.name, self.traj.GetNumWaypoints()))
+        robot.ExecutePath(self.traj)
+
+    def _bypass(self, manip):
+        
+        robot = manip.GetRobot()
+        env = robot.GetEnv()
         if self.traj is None:
-            self._load_traj(robot.GetEnv())
+            self._load_traj(env)
 
         cspec = self.traj.GetConfigurationSpecification()
         last_wpt = self.traj.GetWaypoint(self.traj.GetNumWaypoints()-1)
 
         dofindices = prpy.util.GetTrajectoryIndices(self.traj)
-        dofvalues = cspec.ExtractJointValues(last_wpt)
+        dofvalues = cspec.ExtractJointValues(last_wpt, robot, manip.GetArmIndices())
         
-        with robot.GetEnv():
+        with env:
             robot.SetDOFValues(values=dofvalues, dofindices=dofindices)
         
 
