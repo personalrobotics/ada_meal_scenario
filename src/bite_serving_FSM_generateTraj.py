@@ -21,6 +21,8 @@ from tasklogger import TaskLogger
 
 slowVelocityLimits = np.asarray([ 0.3,0.3,0.3,0.3,0.3,0.3,0.78,0.78])
 
+# lookingAtPlateConfiguration = np.asarray([0.81812309, -1.14344739,  0.36382416,  2.64179402, -1.37920679, -0.55691865])
+
 
 defaultEndEffectorPose = np.asarray([[ 0.04367424,  0.02037604, -0.99883801,  0.65296864],
         [-0.99854746,  0.03246594, -0.04299924, -0.00927059],
@@ -32,6 +34,9 @@ class AdaBiteServing(object):
   #Finite State Machine
   ROBOT_STATE = "INITIAL"
   plateDetectedTimes = 1
+  RESOLUTION = 0.02
+  NUMTRAJ = 9
+
   def addWaterServingTask(self):
     self.waterServing_task = self.tasklist.add_task('WaterServing')
     self.findGlass_subtask = self.waterServing_task.add_task('Find Glass')
@@ -98,7 +103,6 @@ class AdaBiteServing(object):
     self.Initialized = True
 
     self.pub = rospy.Publisher('ada_tasks',String, queue_size=10)
-    self.sub = rospy.Subscriber("/perception/morsel_detection", String, self._MorselDetectionCallback, queue_size=1)
 
     self.tasklist = TaskLogger()  
     self.addWaterServingTask()
@@ -120,14 +124,13 @@ class AdaBiteServing(object):
     self.manip = self.robot.arm
 
     #load trajectories
-    folderPath = os.path.dirname(os.path.abspath(os.path.join(__file__, os.pardir)))
-    self.traj_lookingAtFace = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_lookingAtFace.xml")   
-    self.traj_lookingAtPlate = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_lookingAtPlate.xml")   
-    self.traj_serving = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_serving.xml")   
+    self.folderPath = os.path.dirname(os.path.abspath(os.path.join(__file__, os.pardir)))
 
 
-    self.robot.ExecuteTrajectory(self.traj_lookingAtFace)
-    time.sleep(4)
+    #path = self.robot.PlanToConfiguration(lookingAtPlateConfiguration, execute = False)
+    path = self.robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration', execute=False)
+    self.robot.ExecutePath(path)
+    time.sleep(6)
 
   
     iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
@@ -137,89 +140,91 @@ class AdaBiteServing(object):
     self.ROBOT_STATE = "LOOKING_AT_FACE"
     self.statePub.publish(adaBiteServing.ROBOT_STATE)
 
-  def lookingAtPlate(self):
-    if(self.bite_detected == True):
-      print "registering ball pose"
-      self.ball.SetTransform(self.bite_world_pose)
-      self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
+  
 
-  def lookingAtFace(self):
-    #get face recognition
-    self.bite_detected = False
-    self.ROBOT_STATE = "EXECUTING_TRAJECTORY"
-    self.statePub.publish(adaBiteServing.ROBOT_STATE)
-    self.robot.ExecuteTrajectory(self.traj_lookingAtPlate)
-    time.sleep(3)
-    self.ROBOT_STATE = "LOOKING_AT_PLATE"
-    self.statePub.publish(adaBiteServing.ROBOT_STATE)
-
-  def _MorselDetectionCallback(self, msg):
-    obj =  json.loads(msg.data)
-    arr = obj['pts3d']
-    pos = np.asarray(arr)
-    if(pos is None) or(len(pos)==0) or (self.ROBOT_STATE!="LOOKING_AT_PLATE"):
-      return
-    else:
-      relative_pos = pos[0]
-      relative_pose = np.eye(4)
-      relative_pose[0,3] = relative_pos[0] 
-      relative_pose[1,3] = relative_pos[1]
-      relative_pose[2,3] = relative_pos[2]
-      world_camera = self.robot.GetLinks()[7].GetTransform()
-      self.bite_world_pose = np.dot(world_camera,relative_pose)
-      self.bite_detected = True
-
-
-        
-
-  def executeTrajectory(self):    
+  def generateTrajectories(self):    
     defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
-    
-    endEffectorPose = defaultEndEffectorPose.copy()
-    endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.11
-    endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.035
-    endEffectorPose[2,3] = 0.98
-    
-
-    path = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
-    self.robot.ExecuteTrajectory(path)
-
-    time.sleep(4)
-    #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-    #from IPython import embed
-    #embed()
-    #from IPython import embed
-    #embed()
-    #self.robot.planner = self.robot.vectorfield_planner
-    path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.03, execute = False)
-    self.robot.ExecuteTrajectory(path)
-
-    time.sleep(2)
-
-    self.robot.ExecuteTrajectory(self.traj_serving)
+    platecenter = numpy.array([0.729, -0.052,0.7612])
+    startPose = numpy.zeros(2)
+    startPose[0] = platecenter[0] - self.NUMTRAJ*self.RESOLUTION/2.0
+    startPose[1] = platecenter[1] - self.NUMTRAJ*self.RESOLUTION/2.0
 
 
-    time.sleep(5)
-    #print str(self.tasklist)
-    if(self.waterServing_task.is_complete()):
-      self.addWaterServingTask()
-      self.pub.publish(str(self.tasklist))
-    #self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
-    self.ROBOT_STATE = "LOOKING_AT_FACE"
+    #offsets for gripper
+ 
+
+
+    for ii in range(0,self.NUMTRAJ):
+    	for jj in range(0,self.NUMTRAJ):    
+    	  bitePose = numpy.zeros(3)
+          bitePose[0] = startPose[0] + ii*self.RESOLUTION
+          bitePose[1] = startPose[1] + jj*self.RESOLUTION
+          endEffectorPose = defaultEndEffectorPose.copy()
+          endEffectorPose[0,3] = bitePose[0]-0.11
+          endEffectorPose[1,3] = bitePose[1]+0.035
+          endEffectorPose[2,3] = 0.98
+          #from IPython import embed
+          #embed()    
+          print ii,jj
+          path1 = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
+          self.robot.ExecutePath(path1)
+          time.sleep(4)
+          path2 = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.11, execute = False)          
+          traj_name1 =self.folderPath + '/data/trajectories/traj1_x%d_y%d.xml' % (ii, jj)
+          traj_name2 =self.folderPath + '/data/trajectories/traj2_x%d_y%d.xml' % (ii, jj)
+          prpy.rave.save_trajectory(path1, traj_name1)
+          prpy.rave.save_trajectory(path2, traj_name2)
+          time.sleep(3)
+          path = self.robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration', execute=False)
+          self.robot.ExecutePath(path)
+          time.sleep(6)
+
+    # traj1 = prpy.rave.load_trajectory(self.env,traj_name1)
+    # traj2 = prpy.rave.load_trajectory(self.env,traj_name2)   
+
+    # #self.robot.ExecutePath(path1)
+    # #time.sleep(2)
+    # #self.robot.ExecutePath(path2)
+    # #time.sleep(2)
+    # self.robot.PlanToConfiguration(lookingAtPlateConfiguration)
+    # #self.robot.ExecuteTrajectory(self.traj_lookingAtPlate)
+    # time.sleep(4)
+    # self.robot.ExecuteTrajectory(traj1)
+    # time.sleep(3)
+    # self.robot.ExecuteTrajectory(traj2)
+    # time.sleep(2)
+
+    # #time.sleep(4)
+    # #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
+    # #embed()
+    # #exit()
+    # #from IPython import embed
+    # #embed()
+    # self.robot.ExecutePath(path)
+
+    # time.sleep(2)
+
+    # self.robot.ExecuteTrajectory(self.traj_serving)
+
+
+    # time.sleep(5)
+    # #print str(self.tasklist)
+    # if(self.waterServing_task.is_complete()):
+    #   self.addWaterServingTask()
+    #   self.pub.publish(str(self.tasklist))
+    # #self.robot.planner = prpy.planning.Sequence(self.robot.cbirrt_planner) 
+    # self.ROBOT_STATE = "LOOKING_AT_FACE"
 
   
 if __name__ == "__main__":
   adaBiteServing = AdaBiteServing()
-  while not rospy.is_shutdown():
-    if(adaBiteServing.ROBOT_STATE == "INITIAL"):
-      adaBiteServing.initSimple()
-    elif(adaBiteServing.ROBOT_STATE == "LOOKING_AT_FACE"):
-      adaBiteServing.lookingAtFace()
-    elif(adaBiteServing.ROBOT_STATE == "LOOKING_AT_PLATE"):
-      adaBiteServing.lookingAtPlate()
-    elif(adaBiteServing.ROBOT_STATE == "EXECUTING_TRAJECTORY"):
-      adaBiteServing.executeTrajectory()
-    else:
-      print "Error: Unknown ROBOT_STATE"
-  adaBiteServing.statePub.publish(adaBiteServing.ROBOT_STATE)
-  adaBiteServing.rospyRate.sleep()
+  #while not rospy.is_shutdown():
+  #adaBiteServing.ROBOT_STATE == "INITIAL"):
+  adaBiteServing.initSimple()
+  #adaBiteServing.lookingAtPlate()
+  #  elif(adaBiteServing.ROBOT_STATE == "EXECUTING_TRAJECTORY"):
+  adaBiteServing.generateTrajectories()
+  #  else:
+  #    print "Error: Unknown ROBOT_STATE"
+  #adaBiteServing.statePub.publish(adaBiteServing.ROBOT_STATE)
+  #adaBiteServing.rospyRate.sleep()

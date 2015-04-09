@@ -32,6 +32,9 @@ class AdaBiteServing(object):
   #Finite State Machine
   ROBOT_STATE = "INITIAL"
   plateDetectedTimes = 1
+  RESOLUTION = 0.02
+  NUMTRAJ = 9
+
   def addWaterServingTask(self):
     self.waterServing_task = self.tasklist.add_task('WaterServing')
     self.findGlass_subtask = self.waterServing_task.add_task('Find Glass')
@@ -125,14 +128,26 @@ class AdaBiteServing(object):
     self.traj_lookingAtPlate = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_lookingAtPlate.xml")   
     self.traj_serving = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_serving.xml")   
 
+    self.traj1_list = []
+    self.traj2_list = []
+    for ii in range(0,self.NUMTRAJ):
+      for jj in range(0,self.NUMTRAJ):
+          traj_name1 =folderPath + '/data/trajectories/traj1_x%d_y%d.xml' % (ii, jj)
+          traj_name2 =folderPath + '/data/trajectories/traj2_x%d_y%d.xml' % (ii, jj)
+          traj1 = prpy.rave.load_trajectory(self.env,traj_name1)   
+          traj2 = prpy.rave.load_trajectory(self.env,traj_name2)   
+          self.traj1_list.append(traj1)
+          self.traj2_list.append(traj2)
+    #from IPython import embed
+    #embed()
 
     self.robot.ExecuteTrajectory(self.traj_lookingAtFace)
     time.sleep(4)
 
   
-    iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
-    self.manip.SetIKSolver(iksolver)
-    self.bite_detected = False
+    #iksolver = openravepy.RaveCreateIkSolver(self.env,"NloptIK")
+    #self.manip.SetIKSolver(iksolver)
+    #self.bite_detected = False
 
     self.ROBOT_STATE = "LOOKING_AT_FACE"
     self.statePub.publish(adaBiteServing.ROBOT_STATE)
@@ -175,26 +190,45 @@ class AdaBiteServing(object):
   def executeTrajectory(self):    
     defaultVelocityLimits = self.robot.GetDOFVelocityLimits()
     
-    endEffectorPose = defaultEndEffectorPose.copy()
-    endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.11
-    endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.035
-    endEffectorPose[2,3] = 0.98
-    
 
-    path = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
-    self.robot.ExecuteTrajectory(path)
+    #endEffectorPose = defaultEndEffectorPose.copy()
+    #endEffectorPose[0,3] = self.bite_world_pose[0,3]-0.11
+    #endEffectorPose[1,3] = self.bite_world_pose[1,3]+0.035
+    #endEffectorPose[2,3] = 0.98
+    platecenter = numpy.array([0.729, -0.052,0.7612])
+    startPose = numpy.zeros(2)
+    startPose[0] = platecenter[0] - self.NUMTRAJ*self.RESOLUTION/2
+    startPose[1] = platecenter[1] - self.NUMTRAJ*self.RESOLUTION/2
 
-    time.sleep(4)
-    #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
+    diff = numpy.zeros(2)
+    diff[0] = self.bite_world_pose[0,3] + 0.01 -   startPose[0] 
+    diff[1] = self.bite_world_pose[1,3] -   startPose[1]
+
+    numii = int(diff[0]/self.RESOLUTION) + 1
+    numjj = int(diff[1]/self.RESOLUTION) - 1
+    numii = max([numii,0])
+    numjj = max([numjj,0])
+    numii = min([numii,self.NUMTRAJ-1])
+    numjj = min([numjj,self.NUMTRAJ-1])
+    traj1 = self.traj1_list[numii*self.NUMTRAJ + numjj]
+    traj2 = self.traj2_list[numii*self.NUMTRAJ + numjj]
+   
+    # path = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
     #from IPython import embed
     #embed()
-    #from IPython import embed
-    #embed()
-    #self.robot.planner = self.robot.vectorfield_planner
-    path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.03, execute = False)
-    self.robot.ExecuteTrajectory(path)
+    self.robot.ExecuteTrajectory(traj1)
+    time.sleep(3.5)
+    self.robot.ExecuteTrajectory(traj2)
+    time.sleep(1.5)
+    # #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
+    # #from IPython import embed
+    # #embed()
+    # #from IPython import embed
+    # #embed()
+    # path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.11, execute = False)
+    # self.robot.ExecutePath(path)
 
-    time.sleep(2)
+    #time.sleep(2)
 
     self.robot.ExecuteTrajectory(self.traj_serving)
 
