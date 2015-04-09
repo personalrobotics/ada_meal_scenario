@@ -1,0 +1,17 @@
+- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git', version: 0.1.0}
+- git: {local-name: prpy, uri: 'https://github.com/personalrobotics/prpy.git', version: 0.5.0}
+- git: {local-name: or_nlopt_ik, uri: 'https://github.com/personalrobotics/or_nlopt_ik.git', version: 0.1.0}
+- git: {local-name: ada, uri: 'https://github.com/personalrobotics/ada.git', version: 0.1.2}
+- git: {local-name: or_urdf, uri: 'https://github.com/personalrobotics/or_urdf.git', version: 0.2.0}
+- git: {local-name: comps, uri: 'https://github.com/personalrobotics/comps.git', version: 1.0.0}
+- git: {local-name: or_ompl, uri: 'https://github.com/personalrobotics/or_ompl.git', version: 0.5.0}
+- git: {local-name: mico_hardware, uri: 'https://github.com/personalrobotics/mico_hardware.git', version: 0.2.0}
+- git: {local-name: morsel, uri: 'https://github.com/personalrobotics/morsel.git', version: 0.1.0}
+- git: {local-name: libkindrv, uri: 'https://github.com/personalrobotics/libkindrv.git', version: 0.1.2}
+- git: {local-name: or_rviz, uri: 'https://github.com/personalrobotics/or_rviz.git', version: 0.1.0}
+- git: {local-name: or_ros_controller, uri: 'https://github.com/personalrobotics/or_ros_controller.git', version: 0.1.2}
+- git: {local-name: ros_controllers, uri: 'https://github.com/ros-controls/ros_controllers.git', version: 48a224ecf60473f99a9ccc9d10bf387c60012b0a}
+- git: {local-name: softkinetic_driver, uri: 'https://github.com/personalrobotics/softkinetic_driver.git', version: 0.1.0}
+- git: {local-name: pr-ordata, uri: 'https://github.com/personalrobotics/pr-ordata.git', version: 0.1.2}
+- git: {local-name: pr_ros_controllers, uri: 'https://github.com/personalrobotics/pr_ros_controllers.git', version: 0.1.0}
+- git: {local-name: openrave_catkin, uri: 'https://github.com/personalrobotics/openrave_catkin.git', version: 1.0.1}
