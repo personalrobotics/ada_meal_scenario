@@ -1,0 +1,34 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package ada_meal_scenario
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* added scripts for generating trajectories offline and loading cached trajectoreis
+* Changed ExecutePath to ExecuteTrajectory, as this is even faster
+* changed time-tests to use prpy.util.Timer and updated bite_serving_FSM to plan using execute=False and then executePath
+* added file for time_testing
+* removed hardcoded planner.Sequence
+* deleted unused imports
+* Set the arm to be active using setActiveManipulator
+* Custom class now extends object
+* Removed SetDOFValues in Sim=False
+* Merge branch 'master' of https://github.com/personalrobotics/ada_meal_scenario
+* deleted named configurations in the beginning of file
+* Delete bite_serving.py
+* removed some comments
+* added trajectories
+* now some trajectories are cached. still planning is excruciatingly slow
+* working version with nlopt planner and greedy_ik
+* changed so that PlanToEndEffectorOffset is Done with vectorfield/greedyik, I have it hardcoded for now
+* fixed spaces
+* latest version on bite_serving
+* changed water_serving to ignore april tags for demo purposes
+  added bite_serving with Finite State Machine
+* new change
+* Meal Serving Project script
+* added tf publisher to water_serving scenario
+* task logging formatter
+* populated repository
+* Initial commit
+* Contributors: PyryM, Stefanos Nikolaidis
