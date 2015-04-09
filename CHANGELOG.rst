@@ -2,8 +2,8 @@
 Changelog for package ada_meal_scenario
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2015-04-08)
+------------------
 * added scripts for generating trajectories offline and loading cached trajectoreis
 * Changed ExecutePath to ExecuteTrajectory, as this is even faster
 * changed time-tests to use prpy.util.Timer and updated bite_serving_FSM to plan using execute=False and then executePath
