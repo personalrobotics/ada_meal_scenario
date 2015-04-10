@@ -78,6 +78,7 @@ if __name__ == "__main__":
         finally:
             morsal = env.GetKinBody('morsal')
             if morsal is not None:
+                logger.info('Removing morsal from environment')
                 env.Remove(morsal)
 
     import IPython

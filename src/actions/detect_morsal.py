@@ -46,14 +46,16 @@ class MorsalDetector(object):
         self.sub = None
 
     def start(self):
+        logger.info('Subscribing to morsal detection')
         self.sub = rospy.Subscriber("/perception/morsel_detection", 
                                     String, 
                                     self._callback, 
                                     queue_size=1)
     
     def stop(self):
-        print "&&&&&&&&&&&&&&&stop&&&&&&&&&&&&&&&&&&&&&&&"
-        self.sub = None #unsubscribe
+        logger.info('Unsubscribing from morsal detection')
+        self.sub.unregister() # unsubscribe
+        self.sub = None
 
     def add_morsal(self, morsal_in_camera):
         camera_in_world = self.robot.GetLinks()[7].GetTransform()
@@ -68,14 +70,15 @@ class MorsalDetector(object):
         if self.env.GetKinBody('morsal') is None:
            morsal = self.env.ReadKinBodyURI(ball_path)
            morsal.SetName('morsal')
+           self.env.Add(morsal)
         else:
            morsal = self.env.GetKinBody('morsal')
         morsal.SetTransform(morsal_in_world)
-        self.env.Add(morsal)
+
 
         
     def _callback(self, msg):
-        print "*****************hi!*******************"
+        logger.debug('Received detection')
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
         morsal_pos = numpy.asarray(pts_arr)
