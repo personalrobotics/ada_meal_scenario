@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
 from catkin.find_in_workspaces import find_in_workspaces
 from actions.bite_serving import BiteServing
@@ -35,7 +38,7 @@ def setup(sim=False, viewer=None, debug=True):
     robot.SetActiveManipulator('Mico')
     robot.SetActiveDOFs(range(6))
     manip = robot.GetActiveManipulator()
-    iksolver = openravepy.RaveCreateIkSolver(env, 'MloptIK')
+    iksolver = openravepy.RaveCreateIkSolver(env, 'NloptIK')
     manip.SetIKSolver(iksolver)
     robot.manip = manip
 
@@ -60,6 +63,9 @@ if __name__ == "__main__":
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
     args = parser.parse_args()
 
+    import IPython
+    IPython.embed()
+    #exit()
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 

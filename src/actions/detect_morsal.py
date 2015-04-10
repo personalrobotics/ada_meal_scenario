@@ -1,4 +1,4 @@
-import numpy, os, rospy, time
+import numpy, os, rospy, time, json
 from bypassable_action import ActionException, BypassableAction
 from std_msgs.msg import String
 from catkin.find_in_workspaces import find_in_workspaces
@@ -64,8 +64,11 @@ class MorsalDetector(object):
             path='data',
             first_match_only=True)[0]
         ball_path = os.path.join(object_base_path, 'objects', 'smallsphere.kinbody.xml')
-        morsal = self.env.ReadKinBodyURI(ball_path)
-        morsal.SetName('morsal')
+        if self.env.GetKinBody('morsal') is None:
+           morsal = self.env.ReadKinBodyURI(ball_path)
+           morsal.SetName('morsal')
+        else:
+           morsal = self.env.GetKinBody('morsal')
         morsal.SetTransform(morsal_in_world)
         self.env.Add(morsal)
 
@@ -73,7 +76,7 @@ class MorsalDetector(object):
     def _callback(self, msg):
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
-        morsal_pos = np.asarray(pts_arr)
+        morsal_pos = numpy.asarray(pts_arr)
         if(morsal_pos is None) or(len(morsal_pos)==0):
             return
 
