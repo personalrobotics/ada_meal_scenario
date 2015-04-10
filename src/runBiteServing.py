@@ -65,13 +65,21 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
-    raw_input('Press enter to begin')
-    try:
-        manip = robot.GetActiveManipulator()
-        action = BiteServing()
-        action.execute(manip, env, detection_sim=args.detection_sim)
-    except ActionException, e:
-        logger.info('Failed to complete bite serving: %s' % str(e))
+    running = True
+    while running:
+        c = raw_input('Press enter to run (q to quit)')
+        if c == 'q':
+            break
+        try:
+            manip = robot.GetActiveManipulator()
+            action = BiteServing()
+            action.execute(manip, env, detection_sim=args.detection_sim)
+        except ActionException, e:
+            logger.info('Failed to complete bite serving: %s' % str(e))
+        finally:
+            morsal = env.GetKinBody('morsal')
+            if morsal is not None:
+                env.Remove(morsal)
 
     import IPython
     IPython.embed()
