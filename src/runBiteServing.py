@@ -65,8 +65,7 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
-    running = True
-    while running:
+    while True:
         c = raw_input('Press enter to run (q to quit)')
         if c == 'q':
             break
