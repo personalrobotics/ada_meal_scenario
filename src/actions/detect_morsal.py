@@ -52,6 +52,7 @@ class MorsalDetector(object):
                                     queue_size=1)
     
     def stop(self):
+        print "&&&&&&&&&&&&&&&stop&&&&&&&&&&&&&&&&&&&&&&&"
         self.sub = None #unsubscribe
 
     def add_morsal(self, morsal_in_camera):
@@ -74,6 +75,7 @@ class MorsalDetector(object):
 
         
     def _callback(self, msg):
+        print "*****************hi!*******************"
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
         morsal_pos = numpy.asarray(pts_arr)

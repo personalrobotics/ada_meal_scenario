@@ -55,4 +55,4 @@ class GetMorsal(BypassableAction):
             raise ActionException(self, 'Failed to plan straight line path to grab morsal: %s' % str(e))
 
         # Grab the kinbody
-        robot.Grab(morsal)
+        #robot.Grab(morsal)

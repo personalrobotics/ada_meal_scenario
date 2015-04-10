@@ -20,9 +20,9 @@ class BiteServing(BypassableAction):
         state_pub = rospy.Publisher('ada_tasks',String, queue_size=10)
 
         # Move to look at face
-        action = LookAtFace(bypass = self.bypass)
-        state_pub.publish(action.name)
-        action.execute(manip)
+        #action = LookAtFace(bypass = self.bypass)
+        #state_pub.publish(action.name)
+        #action.execute(manip)
         
         # Move to look at plate
         action = LookAtPlate(bypass = self.bypass)
