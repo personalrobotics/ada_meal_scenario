@@ -28,18 +28,30 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
+    from rospkg import RosPack
+    rospack = RosPack()
+    package_path = rospack.get_path(project_name)
+
     try:
-        path_to_start = robot.PlanToNamedConfiguration('ada_meal_scenario_start')
-        path_to_looking_at_face = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtFaceConfiguration')    
-        save_path(path_to_looking_at_face, 'traj_lookingAtFace.xml')
-        
-        path_to_looking_at_plate = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateCOnfiguration')
-        save_path(path_to_looking_at_plate, 'traj_lookingAtPlate.xml')
-        
-        path_to_serving_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration')
-        save_path(path_to_serving_configuration, 'traj_serving.xml')
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_start')
+        robot.SetDOFValues(dofindices=indices, values=values)
+
+        path_to_looking_at_face = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtFaceConfiguration', execute=False)    
+        trajfile = os.path.join(package_path, 'data', 'trajectories', 'traj_lookingAtFace.xml')
+        save_path(path_to_looking_at_face, trajfile)
+        robot.ExecutePath(path_to_looking_at_face)
+
+        path_to_looking_at_plate = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration', execute=False)
+        trajfile = os.path.join(package_path, 'data', 'trajectories', 'traj_lookingAtPlate.xml')
+        save_path(path_to_looking_at_plate, trajfile)
+        robot.ExecutePath(path_to_looking_at_plate)
+
+        path_to_serving_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=False)
+        trajfile = os.path.join(package_path, 'data', 'trajectories', 'traj_serving.xml')
+        save_path(path_to_serving_configuration, trajfile)
+        robot.ExecutePath(path_to_serving_configuration)
+
     except PlanningError, e:
         logger.error('Failed to plan: %s' % str(e))
     
-    import IPython
-    IPython.embed()
+    logger.info('Done')

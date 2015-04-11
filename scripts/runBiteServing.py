@@ -32,14 +32,7 @@ def setup(sim=False, viewer=None, debug=True):
     env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
 
     # Set the active manipulator on the robot
-    # TODO: seems like all this should be in adapy and 
-    # we should just do something like robot.manip.SetActive()
-    robot.SetActiveManipulator('Mico')
-    robot.SetActiveDOFs(range(6))
-    manip = robot.GetActiveManipulator()
-    iksolver = openravepy.RaveCreateIkSolver(env, 'NloptIK')
-    manip.SetIKSolver(iksolver)
-    robot.manip = manip
+    robot.arm.SetActive()
 
     # Now set everything to the right location in the environment
     robot_pose = numpy.array([[1., 0., 0., 0.409],
