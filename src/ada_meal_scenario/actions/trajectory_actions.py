@@ -49,7 +49,7 @@ class RunTrajectory(BypassableAction):
 
         # logger.info('Executing trajectory for action %s. Num points: %d' % (self.name, self.traj.GetNumWaypoints()))
         robot.ExecuteTrajectory(self.traj)
-        time.sleep(1)
+        time.sleep(3)
 
     def _bypass(self, manip):
         

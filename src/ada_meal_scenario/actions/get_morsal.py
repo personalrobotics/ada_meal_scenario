@@ -29,7 +29,7 @@ class GetMorsal(BypassableAction):
 
         morsal_pose = morsal.GetTransform()
         #xoffset = -0.11
-        xoffset = -0.13
+        xoffset = -0.11
         #yoffset = 0.035
         yoffset = -0.02
 
@@ -47,7 +47,7 @@ class GetMorsal(BypassableAction):
         # Now stab the morsal
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.07
+            distance = 0.085
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 path = robot.PlanToEndEffectorOffset(direction=direction,

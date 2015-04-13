@@ -86,7 +86,7 @@ class MorsalDetector(object):
             return
 
         morsal_in_camera = numpy.eye(4)
-        morsal_in_camera[:3,3] = morsal_pos
+        morsal_in_camera[:3,3] = morsal_pos[0]
         
         self.add_morsal(morsal_in_camera)
         
