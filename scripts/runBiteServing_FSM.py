@@ -125,6 +125,8 @@ class AdaBiteServing(object):
     self.traj_lookingAtPlate = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_lookingAtPlate.xml")   
     self.traj_serving = prpy.rave.load_trajectory(self.env,folderPath + "/data/trajectories/traj_serving.xml")   
 
+    #from IPython import embed
+    #embed()
 
     self.robot.ExecuteTrajectory(self.traj_lookingAtFace)
     time.sleep(4)
@@ -183,18 +185,23 @@ class AdaBiteServing(object):
 
     path = self.robot.PlanToEndEffectorPose(endEffectorPose, execute = False)
     self.robot.ExecuteTrajectory(path)
+    from IPython import embed
+    embed()
+    #path = self.robot.PlanToEndEffectorPose(endEffectorPose)
+    #self.robot.ExecuteTrajectory(path)
+    
 
     time.sleep(4)
-    #@self.robot.planner = prpy.planning.Sequence(self.robot.greedyik_planner, self.robot.cbirrt_planner) 
-    #from IPython import embed
-    #embed()
-    #from IPython import embed
-    #embed()
-    #self.robot.planner = self.robot.vectorfield_planner
+
     path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.03, execute = False)
     self.robot.ExecuteTrajectory(path)
 
+    path = self.robot.PlanToEndEffectorOffset(numpy.asarray([0, 0, -1]),0.03, execute = False)
+    self.robot.ExecuteTrajectory(path)
+
+
     time.sleep(2)
+
 
     self.robot.ExecuteTrajectory(self.traj_serving)
 
@@ -223,3 +230,4 @@ if __name__ == "__main__":
       print "Error: Unknown ROBOT_STATE"
   adaBiteServing.statePub.publish(adaBiteServing.ROBOT_STATE)
   adaBiteServing.rospyRate.sleep()
+
