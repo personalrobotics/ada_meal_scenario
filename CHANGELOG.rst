@@ -2,8 +2,8 @@
 Changelog for package ada_meal_scenario
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2015-04-12)
+------------------
 * Merge branch 'feature/action_framework'
   Conflicts:
   scripts/runBiteServing_FSM.py
