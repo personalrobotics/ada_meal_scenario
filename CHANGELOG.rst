@@ -2,6 +2,29 @@
 Changelog for package ada_meal_scenario
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'feature/action_framework'
+  Conflicts:
+  scripts/runBiteServing_FSM.py
+* adding files to generate trajectories and load from trajectories
+* adding FSM scripts to master
+* Now it can detect multiple morsels
+* changed traj_serving.xml, changed manip.Plan to robot.Plan,. added time.sleep
+* Fixing bugs. Update location trajectories are written to.
+* Adding script to generate saved trajectories automatically. Restructuring directory to make imports cleaner
+* Fixing bug in unsubscribing from morsal callback. Also fixing bug that added lots of morsals to environment.
+* removing uneeded running variable
+* Adding ability to run multiple times
+* pushing latest changes
+* fixed some minor issues
+* Adding forgotten import
+* removing old state machine scripts
+* Working end-to-end
+* Cleaning up and fixing some bugs
+* Initial (untested) stab at breaking out demo into actions
+* Contributors: Jennifer King, Stefanos Nikolaidis
+
 0.1.0 (2015-04-08)
 ------------------
 * added scripts for generating trajectories offline and loading cached trajectoreis
