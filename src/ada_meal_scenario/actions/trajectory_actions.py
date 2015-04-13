@@ -2,6 +2,7 @@ import logging, numpy, prpy, os
 import prpy.rave, prpy.util
 from bypassable_action import ActionException, BypassableAction
 from prpy.planning.base import PlanningError
+import time
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -31,21 +32,24 @@ class RunTrajectory(BypassableAction):
             self._load_traj(env)
 
 
-        cspec = self.traj.GetConfigurationSpecification()
-        first_wpt = self.traj.GetWaypoint(0)
-        first_config = cspec.ExtractJointValues(first_wpt, robot, manip.GetArmIndices())
-        current_config = manip.GetDOFValues()
+        #cspec = self.traj.GetConfigurationSpecification()
+        #first_wpt = self.traj.GetWaypoint(0)
+        # first_config = cspec.ExtractJointValues(first_wpt, robot, manip.GetArmIndices())
+        # current_config = manip.GetDOFValues()
         
-        # Plan to the start of the trajectory if we aren't already there
-        if numpy.linalg.norm(first_config - current_config) > 0.001: # TODO: What is the right epsilon
-            logger.info('Planning to start of trajectory for action %s' % self.name)
-            try:
-                manip.PlanToConfiguration(first_config)
-            except PlanningError, e:
-                raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
+        # # Plan to the start of the trajectory if we aren't already there
+        # if numpy.linalg.norm(first_config - current_config) > 0.001: # TODO: What is the right epsilon
+        #     logger.info('Planning to start of trajectory for action %s' % self.name)
+        #     try:
+        #         #from IPython import embed
+        #         #embed()
+        #         robot.PlanToConfiguration(first_config)
+        #     except PlanningError, e:
+        #         raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
 
-        logger.info('Executing trajectory for action %s. Num points: %d' % (self.name, self.traj.GetNumWaypoints()))
-        robot.ExecutePath(self.traj)
+        # logger.info('Executing trajectory for action %s. Num points: %d' % (self.name, self.traj.GetNumWaypoints()))
+        robot.ExecuteTrajectory(self.traj)
+        time.sleep(1)
 
     def _bypass(self, manip):
         

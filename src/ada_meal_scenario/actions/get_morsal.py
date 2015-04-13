@@ -1,6 +1,7 @@
 import numpy, prpy.viz
 from bypassable_action import ActionException, BypassableAction
 from prpy.planning.base import PlanningError
+import time
 
 class GetMorsal(BypassableAction):
 
@@ -14,7 +15,7 @@ class GetMorsal(BypassableAction):
         Execute a sequence of plans that pick up the morsal
         @param manip The manipulator
         """
-
+        global time
         robot = manip.GetRobot()
         env = robot.GetEnv()
         morsal = env.GetKinBody('morsal')
@@ -23,12 +24,14 @@ class GetMorsal(BypassableAction):
 
         desired_ee_pose = numpy.array([[0.04367424,  0.02037604, -0.99883801,  0.],
                                        [-0.99854746,  0.03246594, -0.04299924, 0],
-                                       [ 0.03155207,  0.99926512,  0.02176437, 0.98],
+                                       [ 0.03155207,  0.99926512,  0.02176437, 1.03],
                                        [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
         morsal_pose = morsal.GetTransform()
-        xoffset = -0.11
-        yoffset = 0.035
+        #xoffset = -0.11
+        xoffset = -0.13
+        #yoffset = 0.035
+        yoffset = -0.02
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
         desired_ee_pose[1,3] = morsal_pose[1,3] + yoffset
@@ -36,21 +39,23 @@ class GetMorsal(BypassableAction):
         # Plan near morsal
         try:
             with prpy.viz.RenderPoses([desired_ee_pose], env):
-                path = manip.PlanToEndEffectorPose(desired_ee_pose, execute=False)
-                robot.ExecutePath(path)
+                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
+                robot.ExecuteTrajectory(path)
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
-
+        time.sleep(4)
         # Now stab the morsal
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.11
+            distance = 0.07
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
-                path = manip.PlanToEndEffectorOffset(direction=direction,
-                                                 distance=0.11,
+                path = robot.PlanToEndEffectorOffset(direction=direction,
+                                                 distance=distance,
                                                  execute=False)  #TODO: add some tolerance
-                robot.ExecutePath(path)
+                robot.ExecuteTrajectory(path)
+                import time
+                time.sleep(2)
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan straight line path to grab morsal: %s' % str(e))
 

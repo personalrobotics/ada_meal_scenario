@@ -42,6 +42,9 @@ def setup(sim=False, viewer=None, debug=True):
     with env:
         robot.SetTransform(robot_pose)
 
+    iksolver = openravepy.RaveCreateIkSolver(env,"NloptIK")
+    robot.arm.SetIKSolver(iksolver)
+
     return env, robot
 
 if __name__ == "__main__":
