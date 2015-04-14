@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<KinBody name="fork">
+  <Body type="dynamic">
+    <Geom type="cylinder">
+      <radius>0.025</radius>
+      <height>0.1</height>
+    </Geom>
+    <Geom type="box">
+      <extents>.0125 .03 .005</extents>
+      <Translation>0 .08 0</Translation>
+    </Geom>
+    <Geom type="box">
+      <extents>.0125 .0255 .005</extents>
+      <Translation>0 .135 0.018</Translation>
+      <RotationAxis>1. 0. 0. 37.</RotationAxis>
+    </Geom>
+  </Body>
+</KinBody>

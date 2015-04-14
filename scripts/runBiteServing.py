@@ -45,6 +45,21 @@ def setup(sim=False, viewer=None, debug=True):
     iksolver = openravepy.RaveCreateIkSolver(env,"NloptIK")
     robot.arm.SetIKSolver(iksolver)
 
+    # Load the fork into the robot's hand
+    fork_path = os.path.join(data_base_path[0], 'objects', 'fork.kinbody.xml')
+    fork = env.ReadKinBodyXMLFile(fork_path)
+    env.Add(fork)
+    
+    # Fork in end-effector
+    ee_in_world = robot.arm.GetEndEffectorTransform()
+    fork_in_ee = numpy.array([[ 0., -1.,  0., -0.025],
+                              [ 0.,  0., -1., 0.],
+                              [ 1.,  0.,  0., -0.145],
+                              [ 0.,  0.,  0., 1.]])
+    fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
+    fork.SetTransform(fork_in_world)
+    robot.Grab(fork)
+
     return env, robot
 
 if __name__ == "__main__":
