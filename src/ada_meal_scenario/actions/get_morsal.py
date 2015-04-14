@@ -22,10 +22,23 @@ class GetMorsal(BypassableAction):
         if morsal is None:
             raise ActionException(self, 'Failed to find morsal in environment.')
 
-        desired_ee_pose = numpy.array([[0.04367424,  0.02037604, -0.99883801,  0.],
-                                       [-0.99854746,  0.03246594, -0.04299924, 0],
-                                       [ 0.03155207,  0.99926512,  0.02176437, 1.03],
-                                       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        fork = env.GetKinBody('fork')
+        if True: #fork is None:
+            desired_ee_pose = numpy.array([[0.04367424,  0.02037604, -0.99883801,  0.],
+                                           [-0.99854746,  0.03246594, -0.04299924, 0.],
+                                           [ 0.03155207,  0.99926512,  0.02176437, 0.],
+                                           [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        else:
+            
+            desired_fork_tip_in_world = numpy.array([[ 0.,  0., 1., 0.],
+                                                     [-1.,  0., 0., 0.],
+                                                     [ 0., -1., 0., 0.],
+                                                     [ 0.,  0., 0., 1.]])
+            ee_in_world = manip.GetEndEffectorTransform()
+            fork_tip_in_world = fork.GetLink('tinetip').GetTransform()
+            ee_in_fork_tip = numpy.dot(numpy.linalg.inv(fork_tip_in_world),
+                                       ee_in_world)
+            desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
 
         morsal_pose = morsal.GetTransform()
         #xoffset = -0.11
@@ -35,6 +48,7 @@ class GetMorsal(BypassableAction):
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
         desired_ee_pose[1,3] = morsal_pose[1,3] + yoffset
+        desired_ee_pose[2,3] = 1.03
 
         # Plan near morsal
         try:
