@@ -2,8 +2,8 @@
 Changelog for package ada_meal_scenario
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2015-04-15)
+------------------
 * latest changes
 * nicely tuned offsets
 * nice fine-tuned offsets
