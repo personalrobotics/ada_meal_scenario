@@ -58,9 +58,13 @@ class MorsalDetector(object):
         self.sub = None
 
     def add_morsal(self, morsal_in_camera):
-        camera_in_world = self.robot.GetLinks()[7].GetTransform()
+        camera_in_world = self.robot.GetLink('Camera_RGB_Frame').GetTransform()
         morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
+        import openravepy
+        h1 = openravepy.misc.DrawAxes(self.env, camera_in_world)
+        h2 = openravepy.misc.DrawAxes(self.env, morsal_in_world)
 
+        
         object_base_path = find_in_workspaces(
             search_dirs=['share'],
             project='ada_meal_scenario',

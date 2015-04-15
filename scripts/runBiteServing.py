@@ -34,6 +34,11 @@ def setup(sim=False, viewer=None, debug=True):
     # Set the active manipulator on the robot
     robot.arm.SetActive()
 
+    if sim is True:
+    	startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
+        -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
+        -1.65409614e+00,   1.30780704e+00])
+        robot.SetDOFValues(startConfig)
     # Now set everything to the right location in the environment
     robot_pose = numpy.array([[1., 0., 0., 0.409],
                               [0., 1., 0., 0.338],
@@ -53,8 +58,8 @@ def setup(sim=False, viewer=None, debug=True):
     # Fork in end-effector
     ee_in_world = robot.arm.GetEndEffectorTransform()
     fork_in_ee = numpy.array([[ 0., -1.,  0., -0.025],
-                              [ 0.,  0., -1., 0.],
-                              [ 1.,  0.,  0., -0.145],
+                              [ 0.,  0., 1., 0.],
+                              [ -1.,  0.,  0., -0.145],
                               [ 0.,  0.,  0., 1.]])
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
@@ -76,6 +81,8 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
+    from IPython import embed
+    embed()
     while True:
         c = raw_input('Press enter to run (q to quit)')
         if c == 'q':

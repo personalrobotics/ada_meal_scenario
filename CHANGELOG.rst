@@ -2,6 +2,21 @@
 Changelog for package ada_meal_scenario
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.1 (2015-04-15)
+------------------
+* latest changes
+* nicely tuned offsets
+* nice fine-tuned offsets
+* recreated trajectories, set offsets to work with structureIO and added sleep
+* changes using mike's branch
+* Contributors: Stefanos Nikolaidis
+
+* nicely tuned offsets
+* nice fine-tuned offsets
+* recreated trajectories, set offsets to work with structureIO and added sleep
+* changes using mike's branch
+* Contributors: Stefanos Nikolaidis
+
 0.2.0 (2015-04-12)
 ------------------
 * Merge branch 'feature/action_framework'

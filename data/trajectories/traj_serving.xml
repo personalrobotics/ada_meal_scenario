@@ -1,8 +1,8 @@
 <trajectory>
 <configuration>
-<group name="joint_values ADA 0 1 2 3 4 5" offset="0" dof="6" interpolation="linear"/>
+<group name="joint_values ADA 2 3 4 5 6 7" offset="0" dof="6" interpolation="linear"/>
 </configuration>
 <data count="2">
-1.629508908819002 -0.7180233836117516 -0.3041492417696987 1.063857754343916 -1.198327149368633 2.131285076654919 0.56979876 -1.40909664 -0.68818586 0.9805578 -1.22807706 0.58785866 </data>
+1.35230953 -0.747860642 -0.5438112360000001 0.4224489880000006 -1.12930733 2.61323401 0.56979876 -1.40909664 -0.68818586 0.9805578 -1.22807706 0.58785866 </data>
 <description><![CDATA[{"planning_method": "PlanToConfiguration", "planner": "SnapPlanner", "smooth": true}]]></description>
 </trajectory>
