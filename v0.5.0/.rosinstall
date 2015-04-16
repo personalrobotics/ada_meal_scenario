@@ -7,7 +7,7 @@
 - git: {local-name: comps, uri: 'https://github.com/personalrobotics/comps.git', version: 1.0.0}
 - git: {local-name: or_ompl, uri: 'https://github.com/personalrobotics/or_ompl.git', version: 0.5.0}
 - git: {local-name: mico_hardware, uri: 'https://github.com/personalrobotics/mico_hardware.git', version: 0.2.0}
-- git: {local-name: morsel, uri: 'https://github.com/personalrobotics/morsel.git', version: 5bc943b797308fbfe6ec6f02823b2a73c451c438}
+- git: {local-name: morsel, uri: 'https://github.com/personalrobotics/morsel.git', version: 5ab22c0ea311ee870a1fd22204d4f21c434304c5}
 - git: {local-name: libkindrv, uri: 'https://github.com/personalrobotics/libkindrv.git', version: 0.1.2}
 - git: {local-name: or_rviz, uri: 'https://github.com/personalrobotics/or_rviz.git', version: 0.1.0}
 - git: {local-name: pr-ordata, uri: 'https://github.com/personalrobotics/pr-ordata.git', version: 0.1.2}
