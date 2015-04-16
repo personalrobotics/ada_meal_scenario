@@ -45,7 +45,7 @@ class GetMorsal(BypassableAction):
 
         morsal_pose = morsal.GetTransform()
         #xoffset = -0.11
-        xoffset = -0.14
+        xoffset = -0.13
         #yoffset = 0.035
         yoffset = 0.025
         #yoffset = -0.11
@@ -74,7 +74,7 @@ class GetMorsal(BypassableAction):
         #from IPython import embed
         #embed()
         # Now stab the morsal
-        time.sleep(1)
+        time.sleep(1.5)
         try:
             direction = numpy.array([0., 0., -1.])
             distance = 0.0825
