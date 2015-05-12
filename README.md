@@ -14,7 +14,7 @@ In the second console window, start streaming data from the sensor. Run
 ``roslaunch openni2.launch openni2_launch``
 In the third window, start the bite-detection stream. To do that, go to ``/src/morsel/detector/biteserver.py`` and run
 ``python biteserver.py structureio_settings.json``
-Finally, in the fourth window, do ``rosrun ada_meal_scenario runBiteServing.py --real`` to start the demo. The robot will go, grasp a bite and place it in a serving position. If you press ``Enter``, the robot will repeat the action sequence. Removing the ``--real`` flag will result in the demo running in simulatio. 
+Finally, in the fourth window, do ``rosrun ada_meal_scenario runBiteServing.py --real`` to start the demo. The robot will go, grasp a bite and place it in a serving position. If you press ``Enter``, the robot will repeat the action sequence. Removing the ``--real`` flag will result in the demo running in simulation. 
 
 
 water_serving.py
