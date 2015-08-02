@@ -1,7 +1,7 @@
 # ada_meal_scenario
 A set of scripts for a meal serving scenario using Ada. 
 
-Running ada_meal_scenario demo
+Running ada_meal_scenario demo 
 ===========================
 
 To run the ada_meal scenario demo, first make sure that both the ADA robot, and the StructureIO sensor are connected to the PC. Additionally, you will need to have installed the openni2 drivers of the StructureIO sensor: http://structure.io/openni
