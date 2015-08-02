@@ -33,7 +33,8 @@ class DetectMorsal(BypassableAction):
         # Here we want to place the kinbody
         #  somewhere in the environment
         morsal_in_camera = numpy.eye(4)
-        morsal_in_camera[:3,3] = [0.1, 0., 0.25]
+        #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
+        morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
                 
         m_detector = MorsalDetector(robot)
         m_detector.add_morsal(morsal_in_camera)
@@ -91,6 +92,7 @@ class MorsalDetector(object):
 
         morsal_in_camera = numpy.eye(4)
         morsal_in_camera[:3,3] = morsal_pos[0]
-        
+
+        #check 
         self.add_morsal(morsal_in_camera)
         

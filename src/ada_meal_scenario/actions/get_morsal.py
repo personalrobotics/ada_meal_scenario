@@ -45,9 +45,9 @@ class GetMorsal(BypassableAction):
 
         morsal_pose = morsal.GetTransform()
         #xoffset = -0.11
-        xoffset = -0.13
+        xoffset = -0.155
         #yoffset = 0.035
-        yoffset = 0.025
+        yoffset = 0.065
         #yoffset = -0.11
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
@@ -57,8 +57,6 @@ class GetMorsal(BypassableAction):
         import openravepy
         h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
 
-        #from IPython import embed
-        #embed()
         # Plan near morsal
         try:
             with prpy.viz.RenderPoses([desired_ee_pose], env):
@@ -71,13 +69,11 @@ class GetMorsal(BypassableAction):
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
         #time.sleep(4)
-        #from IPython import embed
-        #embed()
         # Now stab the morsal
-        time.sleep(1.5)
+        time.sleep(2)
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.0825
+            distance = 0.1075
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
@@ -85,7 +81,13 @@ class GetMorsal(BypassableAction):
                                                  distance=distance,
                                                  execute=False)  #TODO: add some tolerance
                     #import openravepy
+
+
                     res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
+
+                    #from IPython import embed
+                    #embed()
+                    
                     robot.ExecuteTrajectory(path)
                     #robot.ExecutePath(path)
                     import time
