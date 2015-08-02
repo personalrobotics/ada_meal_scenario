@@ -47,7 +47,7 @@ class GetMorsal(BypassableAction):
         #xoffset = -0.11
         xoffset = -0.175
         #yoffset = 0.035
-        yoffset = 0.06
+        yoffset = 0.07
         #yoffset = -0.11
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
@@ -73,7 +73,7 @@ class GetMorsal(BypassableAction):
         time.sleep(2)
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.085
+            distance = 0.075
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
