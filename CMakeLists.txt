@@ -3,7 +3,8 @@ project(ada_meal_scenario)
  
 find_package(catkin REQUIRED COMPONENTS
   openrave_catkin
-  message_generation)
+  message_generation
+)
 
 
 catkin_python_setup()
