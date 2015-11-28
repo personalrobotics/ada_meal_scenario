@@ -54,6 +54,22 @@ def setup(sim=False, viewer=None, debug=True):
     fork_path = os.path.join(data_base_path[0], 'objects', 'fork.kinbody.xml')
     fork = env.ReadKinBodyXMLFile(fork_path)
     env.Add(fork)
+
+    plate_path = os.path.join(data_base_path[0], 'objects', 'plate.kinbody.xml')
+    plate = env.ReadKinBodyXMLFile(plate_path)
+    trans_plate = plate.GetTransform()
+    #trans_plate[0,3] = 0.467+0.097
+    trans_plate[0,3] = 0.4855
+    trans_plate[1,3] = 0.02
+    trans_plate[2,3] = 0.75
+    plate.SetTransform(trans_plate)
+    env.Add(plate)
+
+    #fork_path = os.path.join(data_base_path[0], 'objects', 'fork.kinbody.xml')
+    #fork = env.ReadKinBodyXMLFile(fork_path)
+    #env.Add(fork)
+    from IPython import embed
+    embed()
     
     # Fork in end-effector
     ee_in_world = robot.arm.GetEndEffectorTransform()
@@ -61,6 +77,9 @@ def setup(sim=False, viewer=None, debug=True):
                               [ 0.,  0., 1., 0.],
                               [ -1.,  0.,  0., -0.145],
                               [ 0.,  0.,  0., 1.]])
+
+    Tz = openravepy.matrixFromAxisAngle([numpy.pi/2,0,0])
+    fork_in_ee = numpy.dot(fork_in_ee, Tz)
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
     robot.Grab(fork)
@@ -74,7 +93,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser('Ada meal scenario')
     parser.add_argument("--debug", action="store_true", help="Run with debug")
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
-    parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
+    parser.add_argument("--viewer", type=str, default='rviz', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
     args = parser.parse_args()
 

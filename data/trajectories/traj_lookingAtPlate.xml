@@ -3,6 +3,6 @@
 <group name="joint_values ADA 2 3 4 5 6 7" offset="0" dof="6" interpolation="linear"/>
 </configuration>
 <data count="2">
-0.56979876 -1.40909664 -0.6881858600000005 0.9805578000000003 -1.228077059999999 2.17055498 0.5380363 -1.57 0.27912432 2.33120445 -0.70090858 -0.84132807 </data>
+0.17448971 -0.6502954799999997 0.02122816999999995 1.00745693 -1.195604359999999 2.03722208 0.5380363 -1.57 0.27912432 2.33120445 -0.70090858 -0.84132807 </data>
 <description><![CDATA[{"planning_method": "PlanToConfiguration", "planner": "SnapPlanner", "smooth": true}]]></description>
 </trajectory>

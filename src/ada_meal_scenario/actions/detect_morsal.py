@@ -34,8 +34,8 @@ class DetectMorsal(BypassableAction):
         #  somewhere in the environment
         morsal_in_camera = numpy.eye(4)
         #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
-        morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
-                
+        #morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
+        morsal_in_camera[:3,3] = [0.0, -0.0, 0.45]       
         m_detector = MorsalDetector(robot)
         m_detector.add_morsal(morsal_in_camera)
 
@@ -78,7 +78,14 @@ class MorsalDetector(object):
            self.env.Add(morsal)
         else:
            morsal = self.env.GetKinBody('morsal')
-        morsal.SetTransform(morsal_in_world)
+
+        morsal_in_world_sim = numpy.array([[-0.45422936, -0.88641709,  0.08910912,  0.5839203 ],
+       [-0.88296718,  0.43462921, -0.17738774, -0.01419981],
+       [ 0.1185101 , -0.15925514, -0.98009854,  0.80090827],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+        morsal.SetTransform(morsal_in_world_sim)
+        #morsal.SetTransform(morsal_in_world)
 
 
         
