@@ -1,12 +1,12 @@
-#!/usr/bin/env python
+## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
 
 from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
-package_info = generate_distutils_setup()
-package_info['packages'] = ['ada_meal_scenario', 
-                            'ada_meal_scenario.actions']
-package_info['package_dir'] = {'ada_meal_scenario':'src'}
-package_info['install_requires'] = []
+# fetch values from package.xml
+setup_args = generate_distutils_setup(
+    packages=['ada_meal_scenario', 'ada_meal_scenario.actions'],
+    package_dir={'': 'src'},
+)
 
-setup(**package_info)
+setup(**setup_args)
