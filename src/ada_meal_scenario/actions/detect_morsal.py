@@ -76,6 +76,14 @@ class MorsalDetector(object):
            morsal = self.env.ReadKinBodyURI(ball_path)
            morsal.SetName('morsal')
            self.env.Add(morsal)
+
+
+
+        if self.env.GetKinBody('edge') is None:
+           edge = self.env.ReadKinBodyURI(ball_path)
+           edge.SetName('edge')
+           self.env.Add(edge)
+
         else:
            morsal = self.env.GetKinBody('morsal')
 
@@ -89,7 +97,7 @@ class MorsalDetector(object):
                                               [ 1.        ,  0.        ,  0.        ,  0.02193009],
                                               [ 0.        , -1.        ,  0.        ,  0.98467413],
                                               [ 0.        ,  0.        ,  0.        ,  1.        ]])
-        angle_30 = 120.0/180*numpy.pi
+        angle_30 = -20.0/180*numpy.pi
 	scaling	 = 0.1;
 	trans = numpy.dot(temp, [[scaling * numpy.cos(angle_30)] , [0] , [scaling * numpy.sin(angle_30)] , [1]])
 	

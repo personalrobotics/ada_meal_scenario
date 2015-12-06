@@ -76,7 +76,17 @@ class GetMorsal(BypassableAction):
             desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
 
 	morsal_pose = morsal.GetTransform();
+
+        desired_ee_pose[0,3] = morsal_pose[0,3]
+        desired_ee_pose[1,3] = morsal_pose[1,3]
+        #desired_ee_pose[2,3] = morsal_pose[2,3]
+
+        edge_pose = numpy.array([0.58, -0.06, 0.77])
 	
+        push_direction = [[edge_pose[0] - morsal_pose[0,3]] , [edge_pose[1] - morsal_pose[1,3]] , [0] , [0]]  
+        push_direction = push_direction[0:3]
+        push_direction = numpy.transpose(numpy.array(push_direction))
+
 	direction_morsal = [[morsal_pose[0,3] - desired_ee_pose[0,3]] , [morsal_pose[1,3] - desired_ee_pose[1,3]] , [0] , [0]]  
 	direction_spoon = [[desired_ee_pose[0,0]],[desired_ee_pose[1,0]],[desired_ee_pose[2,0]],[desired_ee_pose[3,0]]];
 	
@@ -87,9 +97,19 @@ class GetMorsal(BypassableAction):
         direction_spoon = numpy.transpose(numpy.array(direction_spoon))
 
 
+        edge = env.GetKinBody('edge')
+        edge_trans = morsal.GetTransform()
+        edge_trans[0,3] = 0.58
+        edge_trans[1,3] = -0.06
+        edge_trans[2,3] = 0.77
+        edge.SetTransform(edge_trans)
+        #push_direction = 
+
 	#angle_rot_spoon = numpy.math.asin(numpy.linalg.norm(numpy.cross(direction_spoon, direction_morsal)) / (numpy.linalg.norm(direction_spoon) * numpy.linalg.norm(direction_morsal)));
-        angle_rot_spoon = numpy.math.acos(numpy.inner(direction_spoon, direction_morsal) / (numpy.linalg.norm(direction_spoon) * numpy.linalg.norm(direction_morsal)))
-        angle_rot_spoon2 = self._fix_angle(direction_spoon[0])-self._fix_angle(direction_morsal[0])
+        #angle_rot_spoon = numpy.math.acos(numpy.inner(direction_spoon, direction_morsal) / (numpy.linalg.norm(direction_spoon) * numpy.linalg.norm(direction_morsal)))
+        #angle_rot_spoon2 = self._fix_angle(direction_spoon[0])-self._fix_angle(direction_morsal[0])
+        angle_push = self._fix_angle(direction_spoon[0])-self._fix_angle(push_direction[0])
+        #angle_rot_
         #from IPython import embed
         #embed()
         #angle_rot_spoon = angle_rot_spoon2
@@ -116,7 +136,7 @@ class GetMorsal(BypassableAction):
   
         # Plan near morsal
         #angle = -20.0/180*numpy.pi
-        angle = angle_rot_spoon2
+        angle = angle_push
         Tx = numpy.array([[1,0,0,0],[0,numpy.cos(angle), -numpy.sin(angle), 0],[0,numpy.sin(angle),numpy.cos(angle),0],[0,0,0,1]])
         T = numpy.array([[numpy.cos(angle),0,numpy.sin(angle),0],[0,1,0, 0],[-numpy.sin(angle),0,numpy.cos(angle),0],[0,0,0,1]])
         #T = numpy.array([[numpy.cos(angle), -numpy.sin(angle), 0, 0],[numpy.sin(angle),numpy.cos(angle),0,0],[0,0,1,0],[0,0,0,1]])
@@ -146,10 +166,9 @@ class GetMorsal(BypassableAction):
         print "after rotation"
         	
 	desired_ee_pose_temp = desired_ee_pose
-        scaling = 0.1 ## make it member variable of detect_morsal class
         gripper_offset = 0.15
-        offset_redx_endeff =  scaling - 0.01 - 0.02       # Center distance of food - radius of food -radius of hand
-        offset_bluez_endeff = gripper_offset
+        offset_redx_endeff =  - 0.01 - 0.02       # Center distance of food - radius of food -radius of hand
+        offset_bluez_endeff = gripper_offset 
         
         trans_matrix = numpy.array([[1,0,0,offset_redx_endeff],[0,1, 0, 0],[0,0,1,offset_bluez_endeff ],[0,0,0,1]])
 	desired_ee_pose = numpy.dot(desired_ee_pose_temp , trans_matrix )
@@ -210,11 +229,35 @@ class GetMorsal(BypassableAction):
                     #embed()
                     armDOFValues = robot.arm.GetDOFValues()
                     #armDOFValues[5] = 1.60
-                    armDOFValues[5] = armDOFValues[5] - 40.0/180*numpy.pi 
 
+                    #armDOFValues[5] = armDOFValues[5] - 40.0/180*numpy.pi 
+
+                    robot.Grab(morsal)
+                
+                    direction = push_direction[0]
+                    distance = numpy.linalg.norm(direction)
+                    path = robot.PlanToEndEffectorOffset(direction=direction,
+                                                 distance=distance,
+                                                 execute=False)  #TODO: add some tolerance
+                    #robot.arm.PlanToConfiguration(armDOFValues)
+                    res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
+                    robot.ExecuteTrajectory(path)
+
+                    armDOFValues = robot.arm.GetDOFValues()
+                    #armDOFValues[5] = 1.60
+
+                    armDOFValues[5] = armDOFValues[5] - 60.0/180*numpy.pi 
                     robot.arm.PlanToConfiguration(armDOFValues)
-                    #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
-                    #robot.ExecuteTrajectory(path)
+
+                    direction = numpy.array([0., 0., 1.])
+                    #distance = 0.075  
+                    distance = 0.03
+                    path = robot.PlanToEndEffectorOffset(direction=direction,
+                                                 distance=distance,
+                                                 execute=False)  #TODO: add some tolerance
+                    #robot.arm.PlanToConfiguration(armDOFValues)
+                    res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
+                    robot.ExecuteTrajectory(path)
                     print "grasped morsel" 
                     from IPython import embed
                     embed()
