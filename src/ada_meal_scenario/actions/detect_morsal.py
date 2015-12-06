@@ -83,6 +83,20 @@ class MorsalDetector(object):
        [-0.88296718,  0.43462921, -0.17738774, -0.01419981],
        [ 0.1185101 , -0.15925514, -0.98009854,  0.80090827],
        [ 0.        ,  0.        ,  0.        ,  1.        ]])
+	
+	#30 degrees
+	temp = numpy.array([[ 0.        ,  0.        , -1.        ,  0.46670763],
+                                              [ 1.        ,  0.        ,  0.        ,  0.02193009],
+                                              [ 0.        , -1.        ,  0.        ,  0.98467413],
+                                              [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        angle_30 = 120.0/180*numpy.pi
+	scaling	 = 0.1;
+	trans = numpy.dot(temp, [[scaling * numpy.cos(angle_30)] , [0] , [scaling * numpy.sin(angle_30)] , [1]])
+	
+	morsal_in_world_sim[0,3] = trans[0];	
+	morsal_in_world_sim[1,3] = trans[1];	
+	morsal_in_world_sim[2,3] = 0.80090827;	
+	morsal_in_world_sim[3,3] = trans[3];	
 
         morsal.SetTransform(morsal_in_world_sim)
         #morsal.SetTransform(morsal_in_world)

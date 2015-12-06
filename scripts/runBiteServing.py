@@ -68,8 +68,8 @@ def setup(sim=False, viewer=None, debug=True):
     #fork_path = os.path.join(data_base_path[0], 'objects', 'fork.kinbody.xml')
     #fork = env.ReadKinBodyXMLFile(fork_path)
     #env.Add(fork)
-    from IPython import embed
-    embed()
+    #from IPython import embed
+    #embed()
     
     # Fork in end-effector
     ee_in_world = robot.arm.GetEndEffectorTransform()
@@ -100,8 +100,8 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
-    from IPython import embed
-    embed()
+    #from IPython import embed
+    #embed()
     while True:
         c = raw_input('Press enter to run (q to quit)')
         if c == 'q':
