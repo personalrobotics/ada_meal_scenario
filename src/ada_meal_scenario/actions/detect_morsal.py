@@ -78,9 +78,9 @@ class MorsalDetector(object):
            self.env.Add(morsal)
 
 
-
+        edgeball_path = os.path.join(object_base_path, 'objects', 'edgesphere.kinbody.xml')
         if self.env.GetKinBody('edge') is None:
-           edge = self.env.ReadKinBodyURI(ball_path)
+           edge = self.env.ReadKinBodyURI(edgeball_path)
            edge.SetName('edge')
            self.env.Add(edge)
 
