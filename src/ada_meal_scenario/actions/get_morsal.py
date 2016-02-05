@@ -45,9 +45,10 @@ class GetMorsal(BypassableAction):
 
         morsal_pose = morsal.GetTransform()
         #xoffset = -0.11
-        xoffset = -0.13
+        xoffset = -0.135
         #yoffset = 0.035
-        yoffset = 0.025
+        #yoffset = 0.025
+        yoffset = 0.077
         #yoffset = -0.11
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
@@ -74,10 +75,11 @@ class GetMorsal(BypassableAction):
         #from IPython import embed
         #embed()
         # Now stab the morsal
-        time.sleep(1.5)
+        time.sleep(3)
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.0825
+            #distance = 0.0825
+            distance = 0.1
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
@@ -89,7 +91,7 @@ class GetMorsal(BypassableAction):
                     robot.ExecuteTrajectory(path)
                     #robot.ExecutePath(path)
                     import time
-                    #time.sleep(2)
+                    time.sleep(1)
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan straight line path to grab morsal: %s' % str(e))
 

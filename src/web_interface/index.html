@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ada Meal Interface</title>
+
+    <style>
+        body {
+            overflow: hidden;
+            margin: 0;
+        }
+
+        #meal_view {
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        #connection_indicator {
+            position: fixed;
+            right: 0;
+            top: 0;
+        }
+
+        .good {
+            color: green;
+        }
+
+        .bad {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="meal_view"></canvas>
+    <div id="connection_indicator" class="good">Connected</div>
+
+    <script language="javascript" type="text/javascript" src="./meal_view.js"></script>
+    <script language="javascript" type="text/javascript" src="./view_adapter.js"></script>
+    <script language="javascript" type="text/javascript" src="./data_transfer.js"></script>
+    <script>
+        console.log("Starting...");
+        retrieve_morsel();
+
+        // updates morsel data every 2 seconds
+        setInterval(function() {
+            retrieve_morsel();
+        }, 1000);
+    </script>
+</body>
+</html>

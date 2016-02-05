@@ -1,0 +1,14 @@
+# Start ada_meal_scenario main code
+roslaunch openni2_launch openni2.launch
+python biteserver.py structureio_settings.json verbose.json
+roslaunch ada_launch default.launch
+rosrun ada_meal_scenario runBiteServing.py --real
+
+# Start the interface server
+python server.py
+
+# Echo to the command line the output from the interface (user's selection)
+rostopic echo /interface/morsel_selection
+
+# Generate masks for the plate (if plate has changed)
+python gen_plate_mask.py gen_plate.json

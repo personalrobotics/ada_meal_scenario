@@ -1,0 +1,11 @@
+Instructions for using the web interface for ada_meal_scenario
+
+Start ada_meal_scenario as usual.
+Run server.py, which will start a local http server on port 8000.
+Open the browser. The interface can be used at "localhost:8000".
+
+Notes:
+- The web page should refresh every few seconds on its own. If the interface ever seems broken, try manually refreshing the page.
+- Before demoing, it's best to try a few times to make sure the fork is mounted in the right way, since the fork tip position relative to the hand is hard-coded.
+
+A list of commonly used commands can be seen in commands.txt.
