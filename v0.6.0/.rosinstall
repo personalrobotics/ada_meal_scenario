@@ -1,4 +1,4 @@
-- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git', version: 80fbdc42100d9737f591923fa524e3b541881c1d}
+- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git', version: c82e91b893296e2ee3d7740157df8d457774cb8b}
 - git: {local-name: prpy, uri: 'https://github.com/personalrobotics/prpy.git', version: 2c1dbd499e803270b82b0bcc1ca1a0a33c4a1c85}
 - git: {local-name: or_nlopt_ik, uri: 'https://github.com/personalrobotics/or_nlopt_ik.git', version: 0.1.1}
 - git: {local-name: or_parabolicssmoother, uri: 'https://github.com/personalrobotics/or_parabolicsmoother.git', version: 76e64141d9274762d3fdd9107fd9d0b45bffdf3c}
