@@ -1,4 +1,4 @@
-- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git', version: 80fbdc42100d9737f591923fa524e3b541881c1d}
+- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git', version: c82e91b893296e2ee3d7740157df8d457774cb8b}
 - git: {local-name: prpy, uri: 'https://github.com/personalrobotics/prpy.git', version: 1fe85effdeb1b0661e53afbaeeb0a9e289264d58}
 - git: {local-name: or_nlopt_ik, uri: 'https://github.com/personalrobotics/or_nlopt_ik.git', version: 0.1.1}
 - git: {local-name: or_parabolicssmoother, uri: 'https://github.com/personalrobotics/or_parabolicsmoother.git', version: 76e64141d9274762d3fdd9107fd9d0b45bffdf3c}
@@ -14,3 +14,4 @@
 - git: {local-name: pr_ros_controllers, uri: 'https://github.com/personalrobotics/pr_ros_controllers.git', version: 0.1.0}
 - git: {local-name: openrave_catkin, uri: 'https://github.com/personalrobotics/openrave_catkin.git', version: 1.0.1}
 - git: {local-name: ros_controllers, uri: 'https://github.com/ros-controls/ros_controllers.git', version: 48a224ecf60473f99a9ccc9d10bf387c60012b0a}
+
