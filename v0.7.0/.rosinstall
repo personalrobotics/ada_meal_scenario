@@ -1,0 +1,17 @@
+- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git'}
+- git: {local-name: prpy, uri: 'https://github.com/personalrobotics/prpy.git'}
+- git: {local-name: or_nlopt_ik, uri: 'https://github.com/personalrobotics/or_nlopt_ik.git'}
+- git: {local-name: or_parabolicssmoother, uri: 'https://github.com/personalrobotics/or_parabolicsmoother.git'}
+- git: {local-name: ada, uri: 'https://github.com/personalrobotics/ada.git'}
+- git: {local-name: or_urdf, uri: 'https://github.com/personalrobotics/or_urdf.git'}
+- git: {local-name: comps, uri: 'https://github.com/personalrobotics/comps.git'}
+- git: {local-name: or_ompl, uri: 'https://github.com/personalrobotics/or_ompl.git'}
+- git: {local-name: mico_hardware, uri: 'https://github.com/personalrobotics/mico_hardware.git'}
+- git: {local-name: morsel, uri: 'https://github.com/personalrobotics/morsel.git'}
+- git: {local-name: libkindrv, uri: 'https://github.com/personalrobotics/libkindrv.git'}
+- git: {local-name: or_rviz, uri: 'https://github.com/personalrobotics/or_rviz.git'}
+- git: {local-name: pr-ordata, uri: 'https://github.com/personalrobotics/pr-ordata.git'}
+- git: {local-name: pr_ros_controllers, uri: 'https://github.com/personalrobotics/pr_ros_controllers.git'}
+- git: {local-name: openrave_catkin, uri: 'https://github.com/personalrobotics/openrave_catkin.git'}
+- git: {local-name: ros_controllers, uri: 'https://github.com/ros-controls/ros_controllers.git'}
+- git: {local-name: talker, uri: 'https://github.com/personalrobotics/talker.git'}
