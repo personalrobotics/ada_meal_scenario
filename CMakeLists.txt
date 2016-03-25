@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ada_meal_scenario)
  
-find_package(catkin REQUIRED COMPONENTS
-  openrave_catkin
-  message_generation)
+find_package(catkin REQUIRED COMPONENTS)
+  #openrave_catkin
+  #message_generation)
 
 
 catkin_python_setup()
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages()
+#generate_messages()
 
 ###################################
 ## catkin specific configuration ##
@@ -35,12 +35,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_custom_target(${PROJECT_NAME}_data ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${PROJECT_SOURCE_DIR}/data"
-            "${OpenRAVE_DEVEL_DIR}/${OpenRAVE_DATA_DIR}"
-)
+#add_custom_target(${PROJECT_NAME}_data ALL
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#            "${PROJECT_SOURCE_DIR}/data"
+#            "${OpenRAVE_DEVEL_DIR}/${OpenRAVE_DATA_DIR}"
+#)
 
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/data/"
-    DESTINATION "${OpenRAVE_INSTALL_DIR}/${OpenRAVE_DATA_DIR}"
-)
+#install(DIRECTORY "${PROJECT_SOURCE_DIR}/data/"
+#    DESTINATION "${OpenRAVE_INSTALL_DIR}/${OpenRAVE_DATA_DIR}"
+#)

@@ -4,6 +4,7 @@ import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
 from catkin.find_in_workspaces import find_in_workspaces
 from runBiteServing import setup
 from prpy.planning import PlanningError
+from IPython import embed
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -33,7 +34,8 @@ if __name__ == "__main__":
     package_path = rospack.get_path(project_name)
 
     try:
-        indices, values = robot.configurations.get_configuration('ada_meal_scenario_start')
+
+        indices, values = robot.configurations.get_configuration('home')
         robot.SetDOFValues(dofindices=indices, values=values)
 
         path_to_morselstabbed_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_morselStabbedConfiguration', execute=False)
