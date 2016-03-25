@@ -34,11 +34,17 @@ def setup(sim=False, viewer=None, debug=True):
     # Set the active manipulator on the robot
     robot.arm.SetActive()
 
+    #if sim is True:
+    # 	startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
+    #    -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
+    #    -1.65409614e+00,   1.30780704e+00])
     if sim is True:
-    	startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
-        -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
-        -1.65409614e+00,   1.30780704e+00])
-        robot.SetDOFValues(startConfig)
+        #set configuration to look at plate if sim else plan to look at plate
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_lookingAtPlateConfiguration')
+        robot.SetDOFValues(dofindices=indices, values=values)
+    else:
+	robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
+    #    robot.SetDOFValues(startConfig)
     # Now set everything to the right location in the environment
     robot_pose = numpy.array([[1., 0., 0., 0.409],
                               [0., 1., 0., 0.338],
