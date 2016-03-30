@@ -96,6 +96,9 @@ class LookAtFace(RunTrajectory):
 class LookAtPlate(RunTrajectory):
 
     def __init__(self, bypass=False):
+        #looking at plate traj
+        #starts at: ada_meal_scenario_servingConfiguration
+        #end at: ada_meal_scenario_lookingAtPlateConfiguration
         
         from catkin.find_in_workspaces import find_in_workspaces
         traj_path = find_in_workspaces(

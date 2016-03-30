@@ -87,8 +87,16 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
-    from IPython import embed
-    embed()
+    #from IPython import embed
+    #embed()
+
+    #start by going to ada_meal_scenario_servingConfiguration
+    if sim:
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
+        robot.SetDOFValues(dofindices=indices, values=values)
+    else:
+        robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
+
     while True:
         c = raw_input('Press enter to run (q to quit)')
         if c == 'q':
