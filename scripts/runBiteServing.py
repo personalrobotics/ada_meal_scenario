@@ -5,6 +5,11 @@ from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
 
+
+from visualization_msgs.msg import Marker,MarkerArray
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+import numpy as np
+
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
@@ -73,6 +78,59 @@ def setup(sim=False, viewer=None, debug=True):
 
     return env, robot
 
+def pose_to_arrow_markers(pose, ns='axes', id_start=0, lifetime_secs=10):
+  markers = []
+  scale_size = 0.1
+  dims = [.01, .02, 0.1]
+  dirs = []
+  dirs.append(np.array([1.,0.,0.]))
+  dirs.append(np.array([0.,1.,0.]))
+  dirs.append(np.array([0.,0.,1.]))
+  for ind,dir in enumerate(dirs):
+    marker = Marker()
+    marker.header.frame_id = "map"
+    marker.header.stamp = rospy.Time.now()
+    marker.type = Marker.ARROW
+    marker.action = Marker.ADD;
+    marker.id = id_start + ind
+    marker.lifetime.secs=lifetime_secs
+    marker.ns = ns
+
+    marker.scale.x = dims[0]
+    marker.scale.y = dims[1]
+    marker.scale.z = dims[2]
+
+    marker.pose.position.x = 0.
+    marker.pose.position.y = 0.
+    marker.pose.position.z = 0.
+    marker.pose.orientation.x = 0.
+    marker.pose.orientation.y = 0.
+    marker.pose.orientation.z = 0.
+    marker.pose.orientation.w = 1.
+
+ 
+
+    start_pt = pose[0:3,3]
+    end_pt = np.dot(pose[0:3,0:3], dir)*scale_size + start_pt
+    marker.points = [np_array_to_point(start_pt), np_array_to_point(end_pt)]
+
+    marker.color.r = dir[0]
+    marker.color.g = dir[1]
+    marker.color.b = dir[2]
+    marker.color.a = 1.0
+
+    markers.append(marker)
+
+  return markers
+
+def np_array_to_point(pt_np):
+  pt = Point()
+  pt.x = pt_np[0]
+  pt.y = pt_np[1]
+  pt.z = pt_np[2]
+  return pt
+
+
 if __name__ == "__main__":
         
     rospy.init_node('bite_serving_scenario', anonymous=True)
@@ -97,6 +155,9 @@ if __name__ == "__main__":
     else:
         robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
 
+#    camera_link = robot.GetLink('Camera_RGB_Frame')
+#    camera_transform = camera_link.GetTransform()
+#    with prpy.viz.RenderPoses([camera_transform], env):
     while True:
         c = raw_input('Press enter to run (q to quit)')
         if c == 'q':

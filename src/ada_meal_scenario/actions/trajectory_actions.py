@@ -39,16 +39,16 @@ class RunTrajectory(BypassableAction):
         current_config = manip.GetDOFValues()
 
         fork = env.GetKinBody('fork')
-
         
         # Plan to the start of the trajectory if we aren't already there
         if numpy.linalg.norm(first_config - current_config) > 0.001: # TODO: What is the right epsilon
             logger.info('Planning to start of trajectory for action %s' % self.name)
+            print 'Planning to start of trajectory for action ' + self.name
             try:
                 #from IPython import embed
                 #embed()
                 with prpy.rave.Disabled(fork):
-                   robot.PlanToConfiguration(first_config)
+                   robot.PlanToConfiguration(first_config, execute=True)
             except PlanningError, e:
                 raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
 
