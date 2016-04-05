@@ -17,7 +17,7 @@
     <Translation>0 .1 0.018</Translation>
     <RotationAxis>1. 0. 0. 0.</RotationAxis>
     <Geom type="box">
-      <extents>.0125 .0255 .005</extents>
+      <extents>.0125 .0325 .005</extents>
     </Geom>    
   </Body>
   <Body name="tinetip">

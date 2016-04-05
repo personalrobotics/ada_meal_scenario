@@ -28,7 +28,7 @@ class GetMorsal(BypassableAction):
         if True: #fork is None:
             desired_ee_pose = numpy.array([[-0.06875708,  0.25515971, -0.96445113,  0.51087426],
                                            [ 0.2036257 ,  0.9499768 ,  0.23681355,  0.03655854],
-                                           [ 0.97663147, -0.18010443, -0.11727471,  0.92 ],
+                                           [ 0.97663147, -0.18010443, -0.11727471,  0.94 ],
                                            [ 0.        ,  0.        ,  0.        ,  1.        ]])
         else:
             
@@ -46,9 +46,9 @@ class GetMorsal(BypassableAction):
         morsal_pose = morsal.GetTransform()
         #xoffset = -0.11
         #xoffset = -0.175
-        xoffset = -0.185
+        xoffset = -0.195
         #yoffset = 0.035
-        yoffset = 0.06
+        yoffset = 0.07
         #yoffset = -0.11
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
@@ -71,10 +71,10 @@ class GetMorsal(BypassableAction):
             raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
         #time.sleep(4)
         # Now stab the morsal
-        time.sleep(2)
+        time.sleep(3)
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.06
+            distance = 0.077
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
