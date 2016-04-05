@@ -48,7 +48,7 @@ class GetMorsal(BypassableAction):
         #xoffset = -0.175
         xoffset = -0.195
         #yoffset = 0.035
-        yoffset = 0.07
+        yoffset = 0.077
         #yoffset = -0.11
 
         desired_ee_pose[0,3] = morsal_pose[0,3] + xoffset
