@@ -5,6 +5,7 @@ from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
 
+
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 

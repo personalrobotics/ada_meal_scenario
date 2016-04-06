@@ -4,6 +4,7 @@ from bypassable_action import ActionException, BypassableAction
 from prpy.planning.base import PlanningError
 import time
 
+
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
@@ -47,8 +48,17 @@ class RunTrajectory(BypassableAction):
             try:
                 #from IPython import embed
                 #embed()
-                with prpy.rave.Disabled(fork):
-                   robot.PlanToConfiguration(first_config)
+                #fork should not be disabled if it goes to look at plate
+                if self.name == "LOOKING_AT_PLATE":
+                   #old_acceleration_limits = robot.GetDOFAccelerationLimits()
+                  #old_velocity_limits = robot.GetDOFVelocityLimits()
+                   import openravepy
+                   path = robot.PlanToConfiguration(first_config,execute=False)
+                   res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
+                   robot.ExecuteTrajectory(path)
+                else:                
+                   with prpy.rave.Disabled(fork):
+                     robot.PlanToConfiguration(first_config)
             except PlanningError, e:
                 raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
 
