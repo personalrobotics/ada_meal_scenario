@@ -35,6 +35,11 @@ class DetectMorsal(BypassableAction):
         morsal_in_camera = numpy.eye(4)
         #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
         morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
+
+        #add random noise
+        rand_max_norm = 0.05
+        morsal_in_camera[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
+
                 
         m_detector = MorsalDetector(robot)
         m_detector.add_morsal(morsal_in_camera)

@@ -81,21 +81,16 @@ class GetMorsal(BypassableAction):
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
-                    path = robot.PlanToEndEffectorOffset(direction=direction,
+                    T = robot.arm.GetEndEffectorTransform()
+                    path = robot.arm.PlanToEndEffectorOffset(direction=direction,
                                                  distance=distance,
                                                  execute=True)  #TODO: add some tolerance
-                    #import openravepy
 
 
-                    #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
-
+               
                     #from IPython import embed
                     #embed()
                     
-                    #robot.ExecuteTrajectory(path)
-                    #robot.ExecutePath(path)
-                    #import time
-                    #time.sleep(2)
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan straight line path to grab morsal: %s' % str(e))
 
