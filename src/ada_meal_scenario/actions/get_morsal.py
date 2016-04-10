@@ -61,9 +61,19 @@ class GetMorsal(BypassableAction):
         import openravepy
         h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
 
+        #save old limits
+        old_acceleration_limits = robot.GetDOFAccelerationLimits()
+        old_velocity_limits = robot.GetDOFVelocityLimits()
+
         # Plan near morsal
+        
         try:
             with prpy.viz.RenderPoses([desired_ee_pose], env):
+                
+                #slow down robot
+                robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
+                robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
+
                 path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
                 #path = robot.PlanToConfiguration(desired_configuration, execute=False)
                 #import openravepy
@@ -74,6 +84,11 @@ class GetMorsal(BypassableAction):
             raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
         #time.sleep(4)
         # Now stab the morsal
+        
+        #restore velocity limits
+        robot.SetDOFVelocityLimits(old_velocity_limits)
+        robot.SetDOFAccelerationLimits(old_acceleration_limits)
+
         time.sleep(2)
         try:
             direction = numpy.array([0., 0., -1.])
