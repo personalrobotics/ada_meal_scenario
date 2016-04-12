@@ -9,6 +9,7 @@ from ada_meal_scenario.actions.bypassable_action import ActionException
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import numpy as np
+import IPython
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -62,20 +63,36 @@ def setup(sim=False, viewer=None, debug=True):
     robot.arm.SetIKSolver(iksolver)
 
     # Load the fork into the robot's hand
-    fork_path = os.path.join(data_base_path[0], 'objects', 'fork.kinbody.xml')
-    fork = env.ReadKinBodyXMLFile(fork_path)
-    env.Add(fork)
+    tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
+    env.Add(tool)
     
     # Fork in end-effector
     ee_in_world = robot.arm.GetEndEffectorTransform()
-    fork_in_ee = numpy.array([[ 0., -1.,  0., -0.025],
-                              [ 0.,  0., 1., 0.],
-                              [ -1.,  0.,  0., -0.145],
+    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
+                              [ 0.,  1., 0., -0.002],
+                              [ 0.,  0.,  -1., -0.118],
                               [ 0.,  0.,  0., 1.]])
+    tool_in_world = numpy.dot(ee_in_world, tool_in_ee)
+    tool.SetTransform(tool_in_world)
+    
+    fork = env.ReadKinBodyURI('objects/fork.kinbody.xml')
+    env.Add(fork)
+    fork_in_hole = numpy.array([[1.,0.,0.,0.],
+                                [0.,1.,0.,0.],
+                                [0.,0.,1.,-0.03],
+                                [0.,0.,0.,1.]])
+    hole_in_tool = numpy.array([[0.,0.,1.,0.],
+                                [0.,1.,0.,-0.0225],
+                                [-1.,0.,0.,0.0408],
+                                [0.,0.,0.,1.]])
+    fork_in_tool = numpy.dot(hole_in_tool, fork_in_hole)                           
+    fork_in_ee = numpy.dot(tool_in_ee, fork_in_tool)
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
+    
+    robot.Grab(tool)
     robot.Grab(fork)
-
+    
     return env, robot
 
 def pose_to_arrow_markers(pose, ns='axes', id_start=0, lifetime_secs=10):
