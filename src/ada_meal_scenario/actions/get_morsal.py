@@ -33,9 +33,9 @@ class GetMorsal(BypassableAction):
                                            [ 0.        ,  0.        ,  0.        ,  1.        ]])
         else:
             #TODO instead of fixing the pose, switch to TSR to sample orientations that face downward
-            desired_fork_tip_in_world = numpy.array([[ 0.,  0., 1., 0.],
-                                                     [-1.,  0., 0., 0.],
-                                                     [ 0., -1., 0., 0.],
+            desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
+                                                     [ 0.,  1., 0., 0.],
+                                                     [ 0.,  0.,-1., 0.],
                                                      [ 0.,  0., 0., 1.]])
 
             morsal_pose = morsal.GetTransform()
@@ -66,7 +66,8 @@ class GetMorsal(BypassableAction):
         old_velocity_limits = robot.GetDOFVelocityLimits()
 
         # Plan near morsal
-        
+        import IPython
+        IPython.embed()
         try:
             with prpy.viz.RenderPoses([desired_ee_pose], env):
                 
