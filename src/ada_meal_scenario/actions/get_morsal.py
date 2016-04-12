@@ -33,10 +33,18 @@ class GetMorsal(BypassableAction):
                                            [ 0.        ,  0.        ,  0.        ,  1.        ]])
         else:
             #TODO instead of fixing the pose, switch to TSR to sample orientations that face downward
-            desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
-                                                     [ 0.,  1., 0., 0.],
+
+            #fork top facing left
+            desired_fork_tip_in_world = numpy.array([[0.,  1., 0., 0.],
+                                                     [ 1.,  0., 0., 0.],
                                                      [ 0.,  0.,-1., 0.],
                                                      [ 0.,  0., 0., 1.]])
+
+             #fork top facing towards user
+#            desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
+#                                                     [ 0.,  1., 0., 0.],
+#                                                     [ 0.,  0.,-1., 0.],
+#                                                     [ 0.,  0., 0., 1.]])
 
             morsal_pose = morsal.GetTransform()
 
@@ -66,21 +74,19 @@ class GetMorsal(BypassableAction):
         old_velocity_limits = robot.GetDOFVelocityLimits()
 
         # Plan near morsal
-        import IPython
-        IPython.embed()
         try:
-            with prpy.viz.RenderPoses([desired_ee_pose], env):
+            with prpy.viz.RenderPoses([desired_ee_pose, desired_fork_tip_in_world], env):
                 
                 #slow down robot
-                robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
-                robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
+                #robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
+                #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
-                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
-                #path = robot.PlanToConfiguration(desired_configuration, execute=False)
-                #import openravepy
-                res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'ParabolicSmoother', '')
-                robot.ExecuteTrajectory(path)
-                #robot.ExecutePath(path)
+                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
+                
+                #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
+                #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'HauserParabolicSmoother', '')
+                #robot.ExecuteTrajectory(path)
+
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
         #time.sleep(4)
