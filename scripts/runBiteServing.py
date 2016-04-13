@@ -162,6 +162,16 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
+
+    #slow robot down
+    #save old limits
+    old_acceleration_limits = robot.GetDOFAccelerationLimits()
+    old_velocity_limits = robot.GetDOFVelocityLimits()
+
+    #slow down robot
+    robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
+    robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
+
     #from IPython import embed
     #embed()
 
@@ -190,6 +200,11 @@ if __name__ == "__main__":
             if morsal is not None:
                 logger.info('Removing morsal from environment')
                 env.Remove(morsal)
+
+
+    #restore old limits
+    robot.SetDOFVelocityLimits(old_velocity_limits)
+    robot.SetDOFAccelerationLimits(old_acceleration_limits)
 
     import IPython
     IPython.embed()

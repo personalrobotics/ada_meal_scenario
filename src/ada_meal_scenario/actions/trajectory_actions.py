@@ -2,6 +2,7 @@ import logging, numpy, prpy, os
 import prpy.rave, prpy.util
 from bypassable_action import ActionException, BypassableAction
 from prpy.planning.base import PlanningError
+from prpy.exceptions import TrajectoryNotExecutable
 import time
 
 project_name = 'ada_meal_scenario'
@@ -41,7 +42,8 @@ class RunTrajectory(BypassableAction):
         fork = env.GetKinBody('fork')
         
         # Plan to the start of the trajectory if we aren't already there
-        if numpy.linalg.norm(first_config - current_config) > 0.001: # TODO: What is the right epsilon
+        #if numpy.linalg.norm(first_config - current_config) > 0.001: # TODO: What is the right epsilon
+        if not prpy.util.IsAtTrajectoryStart(robot, self.traj):
             logger.info('Planning to start of trajectory for action %s' % self.name)
             print 'Planning to start of trajectory for action ' + self.name
             try:
@@ -53,9 +55,19 @@ class RunTrajectory(BypassableAction):
                 raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
 
         # logger.info('Executing trajectory for action %s. Num points: %d' % (self.name, self.traj.GetNumWaypoints()))
-        import openravepy
-        openravepy.planningutils.SmoothTrajectory(self.traj,1, 1, 'ParabolicSmoother', '')
-        robot.ExecuteTrajectory(self.traj)
+        # SHERVIN removed smoothing because saved trajectories now smooth
+        #import openravepy
+        #openravepy.planningutils.SmoothTrajectory(self.traj,1, 1, 'ParabolicSmoother', '')
+
+        try:
+            robot.ExecuteTrajectory(self.traj)
+        except e:
+            print str(e)
+            print 'Executing saved traj failed. Trying to replan to config'
+            last_wpt = self.traj.GetWaypoint(self.traj.GetNumWaypoints()-1)
+            last_config = cspec.ExtractJointValues(last_wpt, robot, manip.GetArmIndices())
+            robot.PlanToConfiguration(last_config, execute=True)
+            
         #time.sleep(3)
 
     def _bypass(self, manip):
