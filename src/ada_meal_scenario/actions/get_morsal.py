@@ -35,16 +35,16 @@ class GetMorsal(BypassableAction):
             #TODO instead of fixing the pose, switch to TSR to sample orientations that face downward
 
             #fork top facing left
-            desired_fork_tip_in_world = numpy.array([[0.,  1., 0., 0.],
-                                                     [ 1.,  0., 0., 0.],
-                                                     [ 0.,  0.,-1., 0.],
-                                                     [ 0.,  0., 0., 1.]])
-
-             #fork top facing towards user
-#            desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
-#                                                     [ 0.,  1., 0., 0.],
+#            desired_fork_tip_in_world = numpy.array([[0.,  1., 0., 0.],
+#                                                     [ 1.,  0., 0., 0.],
 #                                                     [ 0.,  0.,-1., 0.],
 #                                                     [ 0.,  0., 0., 1.]])
+
+             #fork top facing towards user
+            desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
+                                                     [ 0.,  1., 0., 0.],
+                                                     [ 0.,  0.,-1., 0.],
+                                                     [ 0.,  0., 0., 1.]])
 
             morsal_pose = morsal.GetTransform()
 
@@ -78,8 +78,8 @@ class GetMorsal(BypassableAction):
             with prpy.viz.RenderPoses([desired_ee_pose, desired_fork_tip_in_world], env):
                 
                 #slow down robot
-                #robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
-                #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
+                robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
+                robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
                 path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
                 
