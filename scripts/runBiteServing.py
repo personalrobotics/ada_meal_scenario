@@ -169,7 +169,7 @@ if __name__ == "__main__":
     old_velocity_limits = robot.GetDOFVelocityLimits()
 
     #slow down robot
-    robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
+    robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
     robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
     #from IPython import embed

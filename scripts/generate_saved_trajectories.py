@@ -37,7 +37,7 @@ if __name__ == "__main__":
     old_acceleration_limits = robot.GetDOFAccelerationLimits()
     old_velocity_limits = robot.GetDOFVelocityLimits()
     #slow down robot
-    robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
+    robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
     robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
     try:
@@ -69,7 +69,11 @@ if __name__ == "__main__":
 
 
 
+
     except PlanningError, e:
         logger.error('Failed to plan: %s' % str(e))
     
+    robot.SetDOFVelocityLimits(old_velocity_limits)
+    robot.SetDOFAccelerationLimits(old_acceleration_limits)
+
     logger.info('Done')
