@@ -6,7 +6,7 @@
 	<!-- Camera -->
 	<include file="$(find openni2_launch)/launch/openni2.launch" />
 	<!-- Morsel detector -->
-	<node pkg="morsel" name="biteserver" type="biteserver.py" args="$(find morsel)/src/detector/structureio_settings.json $(find morsel)/src/detector/verbose.json"/>
+	<node pkg="morsel" name="biteserver" type="biteserver.py" args="$(find morsel)/detector/structureio_settings.json $(find morsel)/detector/verbose.json"/>
 
 	<!-- THE FOLLOWING TWO GROUPS ARE MUTUALLY EXCLUSIVE -->
 	<!-- Bite feeding demo in simulation-->
