@@ -4,11 +4,13 @@ import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
 from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
+from k2_client.msg import BodyArray
 
 
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import numpy as np
+from time import sleep
 import IPython
 
 project_name = 'ada_meal_scenario'
@@ -147,6 +149,28 @@ def np_array_to_point(pt_np):
   pt.z = pt_np[2]
   return pt
 
+def kinect_callback(data):
+    global mouth_open
+    bod = data.bodies[0]
+    act = bod.activities
+    if act.mouthOpen:
+    	mouth_open = True
+    rospy.loginfo("Mouth: %s",mouth_open)
+
+def runOnce(robot, env, detection_sim):
+    try:
+        manip = robot.GetActiveManipulator()
+        action = BiteServing()
+        action.execute(manip, env, detection_sim)
+    except ActionException, e:
+        logger.info('Failed to complete bite serving: %s' % str(e))
+    finally:
+        morsal = env.GetKinBody('morsal')
+        if morsal is not None:
+            logger.info('Removing morsal from environment')
+            env.Remove(morsal)
+
+mouth_open = False
 
 if __name__ == "__main__":
         
@@ -157,6 +181,7 @@ if __name__ == "__main__":
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
+    parser.add_argument("--mouth", action="store_true", help="Use mouth tracking as cue instead of button press")
     args = parser.parse_args()
 
     sim = not args.real
@@ -175,6 +200,10 @@ if __name__ == "__main__":
     #from IPython import embed
     #embed()
 
+    #if necessary, subscribe to kinect channel that broadcasts mouth open/closed
+    if args.mouth:
+    	mouthlistener = rospy.Subscriber("/head/kinect2/k2_bodies/bodies", BodyArray, kinect_callback)
+
     #start by going to ada_meal_scenario_servingConfiguration
     if sim:
         indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
@@ -186,20 +215,17 @@ if __name__ == "__main__":
 #    camera_transform = camera_link.GetTransform()
 #    with prpy.viz.RenderPoses([camera_transform], env):
     while True:
-        c = raw_input('Press enter to run (q to quit)')
-        if c == 'q':
-            break
-        try:
-            manip = robot.GetActiveManipulator()
-            action = BiteServing()
-            action.execute(manip, env, detection_sim=args.detection_sim)
-        except ActionException, e:
-            logger.info('Failed to complete bite serving: %s' % str(e))
-        finally:
-            morsal = env.GetKinBody('morsal')
-            if morsal is not None:
-                logger.info('Removing morsal from environment')
-                env.Remove(morsal)
+    	if args.mouth:
+    		print('Waiting for open mouth')
+    		while not mouth_open:
+    			sleep(0.2)
+    		runOnce(robot, env, args.detection_sim)
+    		mouth_open = False
+    	else:
+	        c = raw_input('Press enter to run (q to quit)')
+	        if c == 'q':
+	            break
+	    	runOnce(robot, env, args.detection_sim)   
 
 
     #restore old limits
