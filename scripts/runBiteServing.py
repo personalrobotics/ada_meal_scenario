@@ -157,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
-    args = parser.parse_args()
+    args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
