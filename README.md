@@ -2,11 +2,11 @@
 A set of scripts for a meal serving scenario using Ada. 
 
 
-runBiteServing.py (Marshmallow demo):
-============================
+## runBiteServing.py (Marshmallow demo):
+
 There are two ways to run this demo. The first uses a ROS launch file, and should work for most cases. If you need additional access to demo args other than `--real` and `--detection-sim`, use the second option which involves launching all associated files separately. 
 
-# Option 1: roslaunch
+### Option 1: roslaunch
 
 '''
 roslaunch ada_meal_scenario biteserving.launch real:=true
@@ -15,7 +15,7 @@ roslaunch ada_meal_scenario biteserving.launch real:=true
 You can leave the real:=true argument off if you'd rather run in sim. 
 
 
-# Option 2: individual file launches
+### Option 2: individual file launches
 Note: in all terminals, first `source devel/setup.bash`.
 
 1. Terminal 1 － ADA controller
@@ -24,7 +24,7 @@ Note: in all terminals, first `source devel/setup.bash`.
 	```
 
 2. Terminal 2 － The depth camera
-	'''
+	```
 	$ roslaunch openni2_launch openni2.launch
 	```
 	Note: The error "Unsupported color video mode" in red is ok
@@ -48,7 +48,7 @@ Note: in all terminals, first `source devel/setup.bash`.
 
 
 
-water_serving.py
+##water_serving.py
 ============================
 This script enables Ada to give water to a person. First, a glass in the environment is detected and localized using April Tags. Then, the robot grasps the glass using TSRs, moves it to a sequence of pre-determined configurations, so that the human user can drink water from the glass, and then places the glass back to a pre-defined location. 
 
