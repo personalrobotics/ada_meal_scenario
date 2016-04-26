@@ -4,15 +4,15 @@ A set of scripts for a meal serving scenario using Ada.
 
 ## runBiteServing.py (Marshmallow demo):
 
-There are two ways to run this demo. The first uses a ROS launch file, and should work for most cases. If you need additional access to demo args other than `--real` and `--detection-sim`, use the second option which involves launching all associated files separately. 
+There are two ways to run this demo. The first uses a ROS launch file, and should work for most cases. If you need additional access to arguments other than `--real` and `--detection-sim`, use the second option which involves launching all associated files separately. 
 
 ### Option 1: roslaunch
 
-'''
+```
 roslaunch ada_meal_scenario biteserving.launch real:=true
-'''
+```
 
-You can leave the real:=true argument off if you'd rather run in sim. 
+Omit the ```real:=true``` argument to run in simulation. 
 
 
 ### Option 2: individual file launches
