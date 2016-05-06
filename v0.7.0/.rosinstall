@@ -1,17 +1,17 @@
-- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git'}
-- git: {local-name: prpy, uri: 'https://github.com/personalrobotics/prpy.git'}
-- git: {local-name: or_nlopt_ik, uri: 'https://github.com/personalrobotics/or_nlopt_ik.git'}
-- git: {local-name: or_parabolicssmoother, uri: 'https://github.com/personalrobotics/or_parabolicsmoother.git'}
-- git: {local-name: ada, uri: 'https://github.com/personalrobotics/ada.git'}
-- git: {local-name: or_urdf, uri: 'https://github.com/personalrobotics/or_urdf.git'}
-- git: {local-name: comps, uri: 'https://github.com/personalrobotics/comps.git'}
-- git: {local-name: or_ompl, uri: 'https://github.com/personalrobotics/or_ompl.git'}
-- git: {local-name: mico_hardware, uri: 'https://github.com/personalrobotics/mico_hardware.git'}
-- git: {local-name: morsel, uri: 'https://github.com/personalrobotics/morsel.git'}
-- git: {local-name: libkindrv, uri: 'https://github.com/personalrobotics/libkindrv.git'}
-- git: {local-name: or_rviz, uri: 'https://github.com/personalrobotics/or_rviz.git'}
-- git: {local-name: pr-ordata, uri: 'https://github.com/personalrobotics/pr-ordata.git'}
-- git: {local-name: pr_ros_controllers, uri: 'https://github.com/personalrobotics/pr_ros_controllers.git'}
-- git: {local-name: openrave_catkin, uri: 'https://github.com/personalrobotics/openrave_catkin.git'}
-- git: {local-name: ros_controllers, uri: 'https://github.com/ros-controls/ros_controllers.git'}
+- git: {local-name: ada_meal_scenario, uri: 'https://github.com/personalrobotics/ada_meal_scenario.git', version: 0.3.0}
+- git: {local-name: prpy, uri: 'https://github.com/personalrobotics/prpy.git', version: ecbf890d9e4f8e57616c049b0edae8390ee2c4c8}
+- git: {local-name: or_nlopt_ik, uri: 'https://github.com/personalrobotics/or_nlopt_ik.git', version: 3e99af50ed4f5fe48fa3572b018b5d518a1bd67d}
+- git: {local-name: or_parabolicssmoother, uri: 'https://github.com/personalrobotics/or_parabolicsmoother.git', version: fc5a3cc7225d5734d79547d2391d4153015e3f66}
+- git: {local-name: ada, uri: 'https://github.com/personalrobotics/ada.git', version: aab6654356deffb263c2daa9631711e4675aa3d5}
+- git: {local-name: or_urdf, uri: 'https://github.com/personalrobotics/or_urdf.git', version: b8d4af9ea7c41c9744aaf0c53ea92243ca06337a}
+- git: {local-name: comps, uri: 'https://github.com/personalrobotics/comps.git', version: 09f5621be4297900efd4ef8836e9fed0d0530130}
+- git: {local-name: or_ompl, uri: 'https://github.com/personalrobotics/or_ompl.git', version: c156a88386e98baace2f0010aaaf1b7deac0eefb}
+- git: {local-name: mico_hardware, uri: 'https://github.com/personalrobotics/mico_hardware.git', version: 431f5c60d64d26c8d16396dbc74ff2376947fdec}
+- git: {local-name: morsel, uri: 'https://github.com/personalrobotics/morsel.git', version: ccabcd8e7b667f822d29637dea235c4e689daa3c}
+- git: {local-name: libkindrv, uri: 'https://github.com/personalrobotics/libkindrv.git', version: a2518ca0cf65f6ad24af85ccd7b71cb7a6b11187}
+- git: {local-name: or_rviz, uri: 'https://github.com/personalrobotics/or_rviz.git', version: 0fec9ad0edd4dbe7171c9268190798eac1d88737}
+- git: {local-name: pr-ordata, uri: 'https://github.com/personalrobotics/pr-ordata.git', version: 659ba23f3fbf3d6057d0201d7efaa50f36e7774c}
+- git: {local-name: pr_ros_controllers, uri: 'https://github.com/personalrobotics/pr_ros_controllers.git', version: 318b2e7a7c8eb225b1487f004555827476012fa5}
+- git: {local-name: openrave_catkin, uri: 'https://github.com/personalrobotics/openrave_catkin.git', version: d7fd14bc9976a2ae0707d0258359c69958459a16}
 - git: {local-name: talker, uri: 'https://github.com/personalrobotics/talker.git'}
+
