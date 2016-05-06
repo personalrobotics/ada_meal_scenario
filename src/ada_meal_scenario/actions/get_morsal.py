@@ -52,8 +52,8 @@ class GetMorsal(BypassableAction):
             #xoffset = -0.185
             #yoffset = 0.06
             
-            xoffset = -0.01
-            yoffset = -0.005
+            xoffset = 0.01
+            yoffset = -0.01#-0.005
             zoffset = 0.06
 
             desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
@@ -100,7 +100,7 @@ class GetMorsal(BypassableAction):
 
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.06
+            distance = 0.05
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
