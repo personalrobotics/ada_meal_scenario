@@ -3,7 +3,7 @@
 # To build the guis
 from Tkinter import *
 from PIL import Image as tkImage
-from PIL import ImageTk
+from PIL import ImageTk, ImageDraw
 import ttk
 import tkMessageBox
 
@@ -52,6 +52,9 @@ class FeedingApp:
         # Set up cv bridge
         self.bridge = CvBridge()
         
+        # Set up event handlers
+        master.bind('<Button-1>', self.clicked)
+        
     def image_listener(self, msg):
         try:
             cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
@@ -62,12 +65,29 @@ class FeedingApp:
         np_img = np.nan_to_num(np_img)
         np_img = cv2.normalize(np_img, np_img, 0, 1, cv2.NORM_MINMAX)*255.0
         tk_img = tkImage.fromarray(np_img, mode='F')
-        self.img = ImageTk.PhotoImage(tk_img)
+        self.img = tk_img
+        
+    def clicked(self, event):
+        x, y = event.x, event.y
+        w = event.widget
+        if w.winfo_class() == 'Label':
+            self.cursor = [x, y]
+            self.clicked_img = self.draw_cursor(self.captured_img)
+            self.clicked_photo = ImageTk.PhotoImage(self.clicked_img)
+            self.image_label.configure(image=self.clicked_photo)
         
     
     def refresh_image(self):
-        self.copy_img = self.img
-        self.image_label.configure(image=self.copy_img)
+        self.captured_img = self.img
+        self.captured_photo = ImageTk.PhotoImage(self.captured_img)
+        self.image_label.configure(image=self.captured_photo)
+    
+    def draw_cursor(self,input_img):
+        in_img = input_img.copy()
+        draw = ImageDraw.Draw(in_img)
+        draw.line((self.cursor[0]-10, self.cursor[1], self.cursor[0]+10, self.cursor[1]), fill=0)
+        draw.line((self.cursor[0], self.cursor[1]-10, self.cursor[0], self.cursor[1]+10), fill=0)
+        return in_img     
         
     def skewer(self):
         pass
