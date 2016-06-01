@@ -13,6 +13,7 @@ import rospy
 
 # For converting ros image message to PIL Image
 from sensor_msgs.msg import Image as rosImage
+from sensor_msgs.msg import CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import cv2
@@ -25,7 +26,7 @@ from ada_meal_scenario.actions.trajectory_actions import LookAtFace, LookAtPlate
 from ada_meal_scenario.actions.get_morsal import GetMorsal
 
 class FeedingApp:
-    def __init__(self, master, image_topic=None, sim=False):
+    def __init__(self, master, image_topic=None, camera_info_topic=None, sim=False):
         
         self.sim = sim
         self.pkgpath = rospkg.RosPack().get_path('ada_meal_scenario')
@@ -34,6 +35,9 @@ class FeedingApp:
         
         if image_topic:
             rospy.Subscriber(image_topic, rosImage, self.image_listener)
+        
+        if camera_info_topic:
+            rospy.Subscriber(camera_info_topic, CameraInfo, self.info_listener)
         
         # Set the geometry manager to be grid
         Grid.columnconfigure(master, 0, weight=1)
@@ -68,7 +72,11 @@ class FeedingApp:
         master.bind('<Button-1>', self.clicked)
         
         self.cursor = None
+        self.camera_info = None
         
+    def info_listener(self,msg):
+        if not self.camera_info:
+            self.camera_info = msg    
         
     def image_listener(self, msg):
         try:
@@ -117,7 +125,7 @@ class FeedingApp:
         action = Serve()
         action.execute(self.robot.GetActiveManipulator())
     
-    def get_morsal(self, pt):
+    def get_morsal(self, depth):
         object_base_path = find_in_workspaces(
             search_dirs=['share'],
             project='ada_meal_scenario',
@@ -132,7 +140,15 @@ class FeedingApp:
             morsal = self.env.GetKinBody('morsal')
         camera_in_world = self.robot.GetLink('Camera_RGB_Frame').GetTransform()
         morsal_in_camera = numpy.eye(4)
-        morsal_pose = [0, 0, 0] # Need to change this!
+        
+        IPython.embed()
+        K = np.array(self.camera_info.K)
+        K = K.reshape(3,3)
+        Kinv = np.linalg.inv(K)
+        P = np.dot(Kinv, np.array([[self.cursor[0]],[self.cursor[1]],[1]]))
+        x = P[0]*depth
+        y = P[1]*depth
+        morsal_pose = [x, y, depth] # Need to change this!
         morsal_in_camera[:3,3] = morsal_pose
         morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
         morsal.SetTransform(morsal_in_world)
@@ -143,7 +159,7 @@ class FeedingApp:
             print('Got a Nan depth! Please select another point.')
             return
         print 'Depth: %f' % (depth)
-        self.get_morsal([self.cursor[1], self.cursor[0], depth])
+        self.get_morsal(depth)
         action = GetMorsal()
         action.execute(self.robot.GetActiveManipulator())
         
@@ -240,7 +256,7 @@ if __name__ == '__main__':
 
     env, robot = setup_robot(sim=args.sim, viewer=args.viewer, debug=args.debug)
 
-    app = FeedingApp(root, image_topic='/camera/depth/image_rect', sim=args.sim)
+    app = FeedingApp(root, image_topic='/camera/depth/image_rect', camera_info_topic='/camera/depth/camera_info', sim=args.sim)
     app.robot = robot
     app.env = env
     root.mainloop()
