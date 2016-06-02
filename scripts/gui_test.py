@@ -193,8 +193,12 @@ def setup_robot(sim=False, viewer=None, debug=True):
     robot.arm.SetActive()
 
     # Set initial robot position (looking at the plate)
-    robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
-
+    if sim:
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
+        robot.SetDOFValues(dofindices=indices, values=values)
+    else:
+        robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
+        
     # Put robot on the table in the right place
     robot_pose = numpy.array([[1., 0., 0., 0.409],
                               [0., 1., 0., 0.338],
@@ -245,6 +249,10 @@ if __name__ == '__main__':
 
     root = Tk()
     root.title('Feeding App')
+    icon_fn = rospkg.RosPack().get_path('ada_meal_scenario') + '/media/icon.png'
+    icon = Image('photo', file=icon_fn)
+    root.tk.call('wm','iconphoto',root._w,icon)
+    
     rospy.init_node('feeding_app', anonymous=True)
     
     parser = argparse.ArgumentParser('Ada meal scenario')
