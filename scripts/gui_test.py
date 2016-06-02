@@ -31,7 +31,8 @@ class FeedingApp:
         self.sim = sim
         self.pkgpath = rospkg.RosPack().get_path('ada_meal_scenario')
         no_img_path = self.pkgpath + '/media/test.jpg'
-        img = ImageTk.PhotoImage(tkImage.open(no_img_path))
+        img = tkImage.open(no_img_path)
+        photo = ImageTk.PhotoImage(img)
         
         if image_topic:
             rospy.Subscriber(image_topic, rosImage, self.image_listener)
@@ -45,8 +46,8 @@ class FeedingApp:
         # Set up image display frame
         self.image_frame = LabelFrame(master,text='Image Feed', padx=5, pady=5)
         self.image_frame.grid(padx=10, pady=10, row=0, column=0)
-        self.image_label = Label(self.image_frame, image=img)
-        self.image_label.image = img
+        self.image_label = Label(self.image_frame, image=photo)
+        self.image_label.image = photo
         self.image_label.grid(padx=10, pady=10, row=0, rowspan=2, column=0, sticky='N')
         
         # Set up control buttons
@@ -73,6 +74,9 @@ class FeedingApp:
         
         self.cursor = None
         self.camera_info = None
+        self.cv_img = None
+        self.img = img
+        self.captured_img = None
         
     def info_listener(self,msg):
         if not self.camera_info:
@@ -91,6 +95,8 @@ class FeedingApp:
         self.img = tk_img
         
     def clicked(self, event):
+        if not self.captured_img:
+            return
         x, y = event.x, event.y
         w = event.widget
         if w.winfo_class() == 'Label':
@@ -107,6 +113,8 @@ class FeedingApp:
             self.clicked_photo = ImageTk.PhotoImage(self.clicked_img)
             self.image_label.configure(image=self.clicked_photo)
         else:
+            self.clicked_img = None
+            self.clicked_photo = None
             self.captured_photo = ImageTk.PhotoImage(self.captured_img)
             self.image_label.configure(image=self.captured_photo)
     
@@ -120,6 +128,8 @@ class FeedingApp:
     def look(self):
         action = LookAtPlate()
         action.execute(self.robot.GetActiveManipulator())
+        self.cursor = None
+        self.refresh_image()
         
     def present(self):
         action = Serve()
@@ -154,11 +164,12 @@ class FeedingApp:
         morsal.SetTransform(morsal_in_world)
         
     def skewer(self):
+        if not self.cv_img:
+            return
         depth = self.cv_img[self.cursor[0], self.cursor[1]]
         if np.isnan(depth):
             print('Got a Nan depth! Please select another point.')
             return
-        print 'Depth: %f' % (depth)
         self.get_morsal(depth)
         action = GetMorsal()
         action.execute(self.robot.GetActiveManipulator())
