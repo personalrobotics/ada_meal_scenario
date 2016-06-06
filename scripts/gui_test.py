@@ -23,7 +23,8 @@ import IPython
 import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
 from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.trajectory_actions import LookAtFace, LookAtPlate, Serve
-from ada_meal_scenario.actions.get_morsal import GetMorsal
+from ada_meal_scenario.actions.get_morsal import SkewerMorsal
+import time
 
 class FeedingApp:
     def __init__(self, master, image_topic=None, camera_info_topic=None, sim=False):
@@ -108,6 +109,7 @@ class FeedingApp:
     
     def refresh_image(self):
         self.captured_img = self.img
+        self.captured_cv_img = self.cv_img
         if self.cursor:
             self.clicked_img = self.draw_cursor(self.captured_img)
             self.clicked_photo = ImageTk.PhotoImage(self.clicked_img)
@@ -129,11 +131,13 @@ class FeedingApp:
         action = LookAtPlate()
         action.execute(self.robot.GetActiveManipulator())
         self.cursor = None
+        time.sleep(0.5) # Need to sleep for a sec to let the robot come to rest
         self.refresh_image()
         
     def present(self):
-        action = Serve()
-        action.execute(self.robot.GetActiveManipulator())
+        #action = Serve()
+        #action.execute(self.robot.GetActiveManipulator())
+        self.robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
     
     def get_morsal(self, depth):
         object_base_path = find_in_workspaces(
@@ -148,10 +152,8 @@ class FeedingApp:
             self.env.Add(morsal)
         else:
             morsal = self.env.GetKinBody('morsal')
-        camera_in_world = self.robot.GetLink('Camera_RGB_Frame').GetTransform()
+        camera_in_world = self.robot.GetLink('Camera_Depth_Frame').GetTransform()
         morsal_in_camera = numpy.eye(4)
-        
-        IPython.embed()
         K = np.array(self.camera_info.K)
         K = K.reshape(3,3)
         Kinv = np.linalg.inv(K)
@@ -164,15 +166,16 @@ class FeedingApp:
         morsal.SetTransform(morsal_in_world)
         
     def skewer(self):
-        if not self.cv_img:
+        if self.captured_cv_img is None:
             return
         depth = self.cv_img[self.cursor[0], self.cursor[1]]
         if np.isnan(depth):
             print('Got a Nan depth! Please select another point.')
             return
         self.get_morsal(depth)
-        action = GetMorsal()
+        action = SkewerMorsal()
         action.execute(self.robot.GetActiveManipulator())
+        self.present()
         
     def scoop(self):
         pass
@@ -202,14 +205,7 @@ def setup_robot(sim=False, viewer=None, debug=True):
 
     # Set the active manipulator on the robot
     robot.arm.SetActive()
-
-    # Set initial robot position (looking at the plate)
-    if sim:
-        indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
-        robot.SetDOFValues(dofindices=indices, values=values)
-    else:
-        robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
-        
+    
     # Put robot on the table in the right place
     robot_pose = numpy.array([[1., 0., 0., 0.409],
                               [0., 1., 0., 0.338],
@@ -217,6 +213,13 @@ def setup_robot(sim=False, viewer=None, debug=True):
                               [0., 0., 0., 1.]])
     with env:
         robot.SetTransform(robot_pose)
+
+    # Set initial robot position (looking at the plate)
+    if sim:
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
+        robot.SetDOFValues(dofindices=indices, values=values)
+    else:
+        robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
 
     # Manually set iksolver for now.
     iksolver = openravepy.RaveCreateIkSolver(env,"NloptIK")
@@ -279,3 +282,4 @@ if __name__ == '__main__':
     app.robot = robot
     app.env = env
     root.mainloop()
+    #IPython.embed()
