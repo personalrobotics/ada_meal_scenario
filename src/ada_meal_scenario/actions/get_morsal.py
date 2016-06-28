@@ -4,6 +4,21 @@ from prpy.planning.base import PlanningError
 import time
 import openravepy
 
+from assistance_policy_action import AssistancePolicyAction
+
+from detect_morsal import morsal_index_to_name
+def get_all_morsal_bodies(env):
+  all_bodies = []
+  for i in range(1000):
+        morsal_name = morsal_index_to_name(i)
+        morsal_body = env.GetKinBody(morsal_name)
+        if morsal_body:
+            all_bodies.append(morsal_body)
+        else:
+            break
+  return all_bodies
+
+
 class GetMorsal(BypassableAction):
 
     def __init__(self, bypass=False):
@@ -19,18 +34,21 @@ class GetMorsal(BypassableAction):
         global time
         robot = manip.GetRobot()
         env = robot.GetEnv()
-        morsal = env.GetKinBody('morsal')
-        if morsal is None:
+        all_morsals = get_all_morsal_bodies(env)
+        #morsal = all_morsals[0]
+        if all_morsals is None:
             raise ActionException(self, 'Failed to find morsal in environment.')
   
 
         fork = env.GetKinBody('fork')
         #if True: #fork is None:
+        all_desired_ee_pose = []
         if fork is None:
-            desired_ee_pose = numpy.array([[-0.06875708,  0.25515971, -0.96445113,  0.51087426],
+            all_desired_ee_pose = [numpy.array([[-0.06875708,  0.25515971, -0.96445113,  0.51087426],
                                            [ 0.2036257 ,  0.9499768 ,  0.23681355,  0.03655854],
                                            [ 0.97663147, -0.18010443, -0.11727471,  0.92 ],
                                            [ 0.        ,  0.        ,  0.        ,  1.        ]])
+                                           for morsal in all_morsals]
         else:
             #TODO instead of fixing the pose, switch to TSR to sample orientations that face downward
 
@@ -39,35 +57,36 @@ class GetMorsal(BypassableAction):
 #                                                     [ 1.,  0., 0., 0.],
 #                                                     [ 0.,  0.,-1., 0.],
 #                                                     [ 0.,  0., 0., 1.]])
+            for morsal in all_morsals:
+                #fork top facing towards user
+                desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
+                                                        [ 0.,  1., 0., 0.],
+                                                        [ 0.,  0.,-1., 0.],
+                                                        [ 0.,  0., 0., 1.]])
 
-             #fork top facing towards user
-            desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
-                                                     [ 0.,  1., 0., 0.],
-                                                     [ 0.,  0.,-1., 0.],
-                                                     [ 0.,  0., 0., 1.]])
+                morsal_pose = morsal.GetTransform()
 
-            morsal_pose = morsal.GetTransform()
+                #old values
+                #xoffset = -0.185
+                #yoffset = 0.06
+                
+                xoffset = 0.01
+                yoffset = -0.01#-0.005
+                zoffset = 0.06
 
-            #old values
-            #xoffset = -0.185
-            #yoffset = 0.06
-            
-            xoffset = 0.01
-            yoffset = -0.01#-0.005
-            zoffset = 0.06
+                desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
+                desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
+                desired_fork_tip_in_world[2,3] = morsal_pose[2,3] + zoffset
 
-            desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
-            desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
-            desired_fork_tip_in_world[2,3] = morsal_pose[2,3] + zoffset
+                fork_tip_in_world = fork.GetLink('tinetip').GetTransform()
+                ee_in_world = manip.GetEndEffectorTransform()
+                ee_in_fork_tip = numpy.dot(numpy.linalg.inv(fork_tip_in_world),
+                                        ee_in_world)
+                desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
+                all_desired_ee_pose.append(desired_ee_pose)
 
-            fork_tip_in_world = fork.GetLink('tinetip').GetTransform()
-            ee_in_world = manip.GetEndEffectorTransform()
-            ee_in_fork_tip = numpy.dot(numpy.linalg.inv(fork_tip_in_world),
-                                       ee_in_world)
-            desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
-
-        import openravepy
-        h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
+        #import openravepy
+        #h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
 
 #        #save old limits
 #        old_acceleration_limits = robot.GetDOFAccelerationLimits()
@@ -77,20 +96,28 @@ class GetMorsal(BypassableAction):
 #        robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
 #        robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
-        # Plan near morsal
-        try:
-            with prpy.viz.RenderPoses([desired_ee_pose, desired_fork_tip_in_world], env):
-                
+
+        #TODO add plan to some start pose?
+    
+        assistance_policy = AssistancePolicyAction(bypass=self.bypass)
+
+#        # Plan near morsal
+#        try:
+#            with prpy.viz.RenderPoses([desired_ee_pose, desired_fork_tip_in_world], env):
+#                
+#
+#
+#                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
+#                
+#                #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
+#                #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'HauserParabolicSmoother', '')
+#                #robot.ExecuteTrajectory(path)
+#
+#        except PlanningError, e:
+#            raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
 
 
-                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
-                
-                #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
-                #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'HauserParabolicSmoother', '')
-                #robot.ExecuteTrajectory(path)
 
-        except PlanningError, e:
-            raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
         #time.sleep(4)
         # Now stab the morsal
         

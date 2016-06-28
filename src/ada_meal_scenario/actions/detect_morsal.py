@@ -6,10 +6,16 @@ from catkin.find_in_workspaces import find_in_workspaces
 import logging
 logger = logging.getLogger('ada_meal_scenario')
 
+#name which we will add indices to
+morsal_base_name = 'morsal'
+def morsal_index_to_name(ind):
+    return morsal_base_name + str(ind)
+
 class DetectMorsal(BypassableAction):
 
     def __init__(self, bypass=False):
         BypassableAction.__init__(self, 'DetectBite', bypass=bypass)
+
 
     def _run(self, robot, timeout=None):
         
@@ -20,29 +26,50 @@ class DetectMorsal(BypassableAction):
         env = robot.GetEnv()
         logger.info('Waiting to detect morsal')
         start_time = time.time()
-        while not env.GetKinBody('morsal') and (timeout is None or time.time() - start_time < timeout):
+        while not env.GetKinBody(morsal_index_to_name(0)) and (timeout is None or time.time() - start_time < timeout):
             time.sleep(1.0)
 
         m_detector.stop()
 
-        if not env.GetKinBody('morsal'):
-            raise ActionException(self, 'Failed to detect morsal.')
+        if not env.GetKinBody(morsal_index_to_name(0)):
+            raise ActionException(self, 'Failed to detect any morsals.')
 
-    def _bypass(self, robot):
+    def _bypass(self, robot, num_morsals=2):
 
-        # Here we want to place the kinbody
-        #  somewhere in the environment
-        morsal_in_camera = numpy.eye(4)
-        #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
-        morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
+        for i in range(num_morsals):
+            # Here we want to place the kinbody
+            #  somewhere in the environment
+            morsal_in_camera = numpy.eye(4)
+            #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
+            morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
 
-        #add random noise
-        rand_max_norm = 0.05
-        morsal_in_camera[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
+            #add random noise
+            rand_max_norm = 0.05
+            morsal_in_camera[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
 
-                
-        m_detector = MorsalDetector(robot)
-        m_detector.add_morsal(morsal_in_camera)
+
+            m_detector = MorsalDetector(robot)
+            m_detector.add_morsal(morsal_in_camera, morsal_index_to_name(i))
+        self.remove_morsals_next_indices(robot.GetEnv(), num_morsals)
+
+    
+    def remove_morsals_next_indices(self, env, start_ind):
+        """ Removes the OpenRAVE kin bodies for all morsals with index at
+        or greater than the start index
+        Assumes that if a morsal of index i if not in the environment, then no morsals
+        with index > i are in the environment
+
+        @param env the OpenRAVE environment
+        @param ind the index
+        """
+
+        ind = start_ind
+        morsal_body = env.GetKinBody(morsal_index_to_name(ind))
+        while morsal_body:
+            env.Remove(morsal_body)
+            ind+=1
+            morsal_body = env.GetKinBody(morsal_index_to_name(ind))
+
 
 class MorsalDetector(object):
     
@@ -63,13 +90,15 @@ class MorsalDetector(object):
         self.sub.unregister() # unsubscribe
         self.sub = None
 
-    def add_morsal(self, morsal_in_camera):
+    def add_morsal(self, morsal_in_camera, morsal_name=None):
         camera_in_world = self.robot.GetLink('Camera_RGB_Frame').GetTransform()
         morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
         import openravepy
         h1 = openravepy.misc.DrawAxes(self.env, camera_in_world)
         h2 = openravepy.misc.DrawAxes(self.env, morsal_in_world)
-
+        
+        if morsal_name is None:
+          morsal_name = 'morsal'
         
         object_base_path = find_in_workspaces(
             search_dirs=['share'],
@@ -77,16 +106,17 @@ class MorsalDetector(object):
             path='data',
             first_match_only=True)[0]
         ball_path = os.path.join(object_base_path, 'objects', 'smallsphere.kinbody.xml')
-        if self.env.GetKinBody('morsal') is None:
+        if self.env.GetKinBody(morsal_name) is None:
            morsal = self.env.ReadKinBodyURI(ball_path)
-           morsal.SetName('morsal')
+           morsal.SetName(morsal_name)
            self.env.Add(morsal)
         else:
-           morsal = self.env.GetKinBody('morsal')
+           morsal = self.env.GetKinBody(morsal_name)
         morsal.SetTransform(morsal_in_world)
 
 
         
+    # TODO update this for multiple morsals
     def _callback(self, msg):
         logger.debug('Received detection')
         obj =  json.loads(msg.data)
@@ -95,9 +125,11 @@ class MorsalDetector(object):
         if(morsal_pos is None) or(len(morsal_pos)==0):
             return
 
-        morsal_in_camera = numpy.eye(4)
-        morsal_in_camera[:3,3] = morsal_pos[0]
+        for i in range(len(morsal_pos)):
+          morsal_in_camera = numpy.eye(4)
+          morsal_in_camera[:3,3] = morsal_pos[i]
 
-        #check 
-        self.add_morsal(morsal_in_camera)
+          #check 
+          self.add_morsal(morsal_in_camera, morsal_index_to_name(i))
         
+
