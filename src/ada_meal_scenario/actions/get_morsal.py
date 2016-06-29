@@ -51,6 +51,7 @@ class GetMorsal(BypassableAction):
                                            for morsal in all_morsals]
         else:
             #TODO instead of fixing the pose, switch to TSR to sample orientations that face downward
+            # make stab go to fixed depth, not relative (in case user hits button before depth all the way down)
 
             #fork top facing left
 #            desired_fork_tip_in_world = numpy.array([[0.,  1., 0., 0.],
@@ -58,6 +59,8 @@ class GetMorsal(BypassableAction):
 #                                                     [ 0.,  0.,-1., 0.],
 #                                                     [ 0.,  0., 0., 1.]])
             for morsal in all_morsals:
+                #TODO add checking of IKs before adding pose
+
                 #fork top facing towards user
                 desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
                                                         [ 0.,  1., 0., 0.],
@@ -99,7 +102,10 @@ class GetMorsal(BypassableAction):
 
         #TODO add plan to some start pose?
     
-        assistance_policy = AssistancePolicyAction(bypass=self.bypass)
+        assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
+        assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose)
+
+        
 
 #        # Plan near morsal
 #        try:
