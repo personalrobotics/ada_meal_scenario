@@ -41,7 +41,7 @@ class BiteServing(BypassableAction):
         state_pub.publish(action.name)
         action.execute(manip)
 
-        # Serve the morsal
-        action = Serve(bypass = self.bypass)
-        state_pub.publish(action.name)
-        action.execute(manip)
+#        # Serve the morsal
+#        action = Serve(bypass = self.bypass)
+#        state_pub.publish(action.name)
+#        action.execute(manip)

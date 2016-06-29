@@ -42,7 +42,6 @@ class GetMorsal(BypassableAction):
 
         fork = env.GetKinBody('fork')
         #if True: #fork is None:
-        all_desired_ee_pose = []
         if fork is None:
             all_desired_ee_pose = [numpy.array([[-0.06875708,  0.25515971, -0.96445113,  0.51087426],
                                            [ 0.2036257 ,  0.9499768 ,  0.23681355,  0.03655854],
@@ -50,44 +49,12 @@ class GetMorsal(BypassableAction):
                                            [ 0.        ,  0.        ,  0.        ,  1.        ]])
                                            for morsal in all_morsals]
         else:
-            #TODO instead of fixing the pose, switch to TSR to sample orientations that face downward
-            # make stab go to fixed depth, not relative (in case user hits button before depth all the way down)
-
-            #fork top facing left
-#            desired_fork_tip_in_world = numpy.array([[0.,  1., 0., 0.],
-#                                                     [ 1.,  0., 0., 0.],
-#                                                     [ 0.,  0.,-1., 0.],
-#                                                     [ 0.,  0., 0., 1.]])
-            for morsal in all_morsals:
-                #TODO add checking of IKs before adding pose
-
-                #fork top facing towards user
-                desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
-                                                        [ 0.,  1., 0., 0.],
-                                                        [ 0.,  0.,-1., 0.],
-                                                        [ 0.,  0., 0., 1.]])
-
-                morsal_pose = morsal.GetTransform()
-
-                #old values
-                #xoffset = -0.185
-                #yoffset = 0.06
-                
-                xoffset = 0.01
-                yoffset = -0.01#-0.005
-                zoffset = 0.06
-
-                desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
-                desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
-                desired_fork_tip_in_world[2,3] = morsal_pose[2,3] + zoffset
-
-                fork_tip_in_world = fork.GetLink('tinetip').GetTransform()
-                ee_in_world = manip.GetEndEffectorTransform()
-                ee_in_fork_tip = numpy.dot(numpy.linalg.inv(fork_tip_in_world),
-                                        ee_in_world)
-                desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
-                all_desired_ee_pose.append(desired_ee_pose)
-
+            all_desired_ee_pose = [Get_Prestab_Pose_For_Morsal(morsal, fork, manip) for morsal in all_morsals]
+            
+          
+        all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
+        for pose in all_desired_stab_ee_pose:
+            pose[2,3] -= 0.05
         #import openravepy
         #h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
 
@@ -133,7 +100,14 @@ class GetMorsal(BypassableAction):
 
         try:
             direction = numpy.array([0., 0., -1.])
-            distance = 0.05
+            
+            #for now, desired height is mean of all morsal heights
+            desired_height = numpy.mean([pose[2,3] for pose in all_desired_stab_ee_pose])
+            curr_height = manip.GetEndEffectorTransform()[2,3]
+
+            distance = curr_height - desired_height
+            print 'distance: ' + str(distance)
+
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
                 with prpy.rave.Disabled(fork):
@@ -152,3 +126,39 @@ class GetMorsal(BypassableAction):
 
         # Grab the kinbody
         #robot.Grab(morsal)
+
+
+
+
+def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
+    #TODO add checking of IKs before adding pose
+
+    #fork top facing towards user
+    desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
+                                            [ 0.,  1., 0., 0.],
+                                            [ 0.,  0.,-1., 0.],
+                                            [ 0.,  0., 0., 1.]])
+
+    morsal_pose = morsal.GetTransform()
+
+    #old values
+    #xoffset = -0.185
+    #yoffset = 0.06
+    
+    xoffset = 0.01
+    yoffset = -0.01#-0.005
+    zoffset = 0.06
+
+    desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
+    desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
+    desired_fork_tip_in_world[2,3] = morsal_pose[2,3] + zoffset
+
+    fork_tip_in_world = fork.GetLink('tinetip').GetTransform()
+    ee_in_world = manip.GetEndEffectorTransform()
+    ee_in_fork_tip = numpy.dot(numpy.linalg.inv(fork_tip_in_world),
+                            ee_in_world)
+    desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
+
+    return desired_ee_pose
+
+
