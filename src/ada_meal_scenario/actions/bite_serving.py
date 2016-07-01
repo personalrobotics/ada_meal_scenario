@@ -4,7 +4,7 @@ from trajectory_actions import LookAtFace, LookAtPlate, Serve
 from detect_morsal import DetectMorsal
 from get_morsal import GetMorsal
 from std_msgs.msg import String
-
+import time
 
 import logging
 logger = logging.getLogger('ada_meal_scenario')
