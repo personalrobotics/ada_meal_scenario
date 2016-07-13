@@ -53,8 +53,14 @@ class GetMorsal(BypassableAction):
             
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
+        xoffset = 0.0
+        yoffset = 0.06
+        zoffset = -0.07
+        for pose in all_desired_ee_pose:
+            pose[0,3] += xoffset
+            pose[1,3] += yoffset
         for pose in all_desired_stab_ee_pose:
-            pose[2,3] -= 0.05
+            pose[2,3] += zoffset
         #import openravepy
         #h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
 

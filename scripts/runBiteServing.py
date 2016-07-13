@@ -41,7 +41,7 @@ def setup(sim=False, viewer=None, debug=True):
     robot.arm.SetActive()
 
     #if sim is True:
-    # 	startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
+    #   startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
     #    -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
     #    -1.65409614e+00,   1.30780704e+00])
     if sim is True:
@@ -49,7 +49,7 @@ def setup(sim=False, viewer=None, debug=True):
         indices, values = robot.configurations.get_configuration('ada_meal_scenario_lookingAtPlateConfiguration')
         robot.SetDOFValues(dofindices=indices, values=values)
     else:
-	robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
+        robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
     #    robot.SetDOFValues(startConfig)
     # Now set everything to the right location in the environment
     robot_pose = numpy.array([[1., 0., 0., 0.409],
@@ -190,6 +190,7 @@ if __name__ == "__main__":
 #    camera_transform = camera_link.GetTransform()
 #    with prpy.viz.RenderPoses([camera_transform], env):
     while True:
+
         c = raw_input('Press enter to run (q to quit)')
         if c == 'q':
             break
