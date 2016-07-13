@@ -4,12 +4,13 @@ import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
 from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
-
+from sensor_msgs.msg import Joy
 
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import numpy as np
 import IPython
+from time import sleep
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -147,8 +148,14 @@ def np_array_to_point(pt_np):
   pt.z = pt_np[2]
   return pt
 
+def joystick_callback(data):
+    global joystick_go_signal
+    # If the left button is pressed, update go signal flag
+    if data.buttons[0]:
+        joystick_go_signal = True
 
 if __name__ == "__main__":
+    global joystick_go_signal
         
     rospy.init_node('bite_serving_scenario', anonymous=True)
 
@@ -157,10 +164,12 @@ if __name__ == "__main__":
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
+    parser.add_argument("--input", default='joystick', help="The input device for this program (joystick or keyboard)")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
+    input_device = args.input
 
 
     #slow robot down
@@ -189,11 +198,29 @@ if __name__ == "__main__":
 #    camera_link = robot.GetLink('Camera_RGB_Frame')
 #    camera_transform = camera_link.GetTransform()
 #    with prpy.viz.RenderPoses([camera_transform], env):
+
+    # If input device is joystick, create subscriber to joystick topic
+    if input_device == 'joystick':
+        joy_listener = rospy.Subscriber('/ada/joy', Joy, joystick_callback)
+        joystick_go_signal = False
+
     while True:
 
-        c = raw_input('Press enter to run (q to quit)')
-        if c == 'q':
+        # Wait for a go signal based on the input device (joystick or keyboard)
+        if input_device == 'keyboard':
+            c = raw_input('Press enter to run (q to quit)')
+            if c == 'q':
+                break
+        elif input_device == 'joystick':
+            print('Press left joystick button to continue (Ctrl+C to quit)')
+            while not joystick_go_signal:
+                sleep(0.5)
+        else:
+            rospy.logerr("Invalid input device (should be 'joystick' or 'keyboard'): "
+                        % input_device)
             break
+
+        # Start bite collection and presentation
         try:
             manip = robot.GetActiveManipulator()
             action = BiteServing()
@@ -206,6 +233,8 @@ if __name__ == "__main__":
                 logger.info('Removing morsal from environment')
                 env.Remove(morsal)
 
+            if input_device == 'joystick':
+                joystick_go_signal = False
 
     #restore old limits
     robot.SetDOFVelocityLimits(old_velocity_limits)
