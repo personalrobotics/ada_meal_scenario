@@ -39,7 +39,7 @@ class BiteServing(BypassableAction):
         # Move to get object
         action = GetMorsal(bypass = self.bypass)
         state_pub.publish(action.name)
-        action.execute(manip)
+        action.execute(manip, 'auton')
 
         # Serve the morsal
         action = Serve(bypass = self.bypass)

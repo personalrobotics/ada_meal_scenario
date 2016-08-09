@@ -7,6 +7,11 @@ import openravepy
 from assistance_policy_action import AssistancePolicyAction
 
 from detect_morsal import morsal_index_to_name
+
+
+get_morsal_modes = ['direct', 'blend', 'shared_auton_1', 'shared_auton_2', 'auton']
+
+
 def get_all_morsal_bodies(env):
   all_bodies = []
   for i in range(1000):
@@ -26,7 +31,7 @@ class GetMorsal(BypassableAction):
         BypassableAction.__init__(self, 'EXECUTING_TRAJECTORY', bypass=bypass)
         
         
-    def _run(self, manip):
+    def _run(self, manip, get_morsal_mode):
         """
         Execute a sequence of plans that pick up the morsal
         @param manip The manipulator
@@ -54,7 +59,7 @@ class GetMorsal(BypassableAction):
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
         xoffset = 0.0
-        yoffset = 0.06
+        yoffset = 0.00
         zoffset = -0.07
         for pose in all_desired_ee_pose:
             pose[0,3] += xoffset
@@ -74,9 +79,25 @@ class GetMorsal(BypassableAction):
 
 
         #TODO add plan to some start pose?
-    
-        assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-        assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose)
+
+      
+
+        if get_morsal_mode == 'shared_auton_1':
+          assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
+          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose)
+        elif get_morsal_mode == 'auton':
+          desired_ee_pose = all_desired_ee_pose[0]
+          try:
+              with prpy.viz.RenderPoses([desired_ee_pose], env):
+
+                  path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
+                  
+                  #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
+                  #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'HauserParabolicSmoother', '')
+                  #robot.ExecuteTrajectory(path)
+
+          except PlanningError, e:
+              raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
 
         
 

@@ -51,10 +51,11 @@ class DetectMorsal(BypassableAction):
             morsal_in_camera[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
 
             #switch to this if you want to test noise in world frame, not camera frame
-#            camera_in_world = robot.GetLink('Camera_RGB_Frame').GetTransform()
-#            morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
+            camera_in_world = robot.GetLink('Camera_Depth_Frame').GetTransform()
+            morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
 #            morsal_in_world[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
-#            morsal_in_camera = numpy.dot(numpy.linalg.inv(camera_in_world), morsal_in_world)
+            morsal_in_world[2,3] -= 0.17
+            morsal_in_camera = numpy.dot(numpy.linalg.inv(camera_in_world), morsal_in_world)
 
             m_detector = MorsalDetector(robot)
             m_detector.add_morsal(morsal_in_camera, morsal_index_to_name(i))
@@ -99,7 +100,7 @@ class MorsalDetector(object):
         self.sub = None
 
     def add_morsal(self, morsal_in_camera, morsal_name=None):
-        camera_in_world = self.robot.GetLink('Camera_RGB_Frame').GetTransform()
+        camera_in_world = self.robot.GetLink('Camera_Depth_Frame').GetTransform()
         morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
         import openravepy
         h1 = openravepy.misc.DrawAxes(self.env, camera_in_world)
@@ -118,6 +119,7 @@ class MorsalDetector(object):
            morsal = self.env.ReadKinBodyURI(ball_path)
            morsal.SetName(morsal_name)
            self.env.Add(morsal)
+           morsal.Enable(False)
         else:
            morsal = self.env.GetKinBody(morsal_name)
         morsal.SetTransform(morsal_in_world)

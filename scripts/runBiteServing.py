@@ -13,6 +13,9 @@ import numpy as np
 import IPython
 from time import sleep
 
+from prpy.tsr.rodrigues import *
+
+
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
@@ -40,6 +43,9 @@ def setup(sim=False, viewer=None, debug=True):
     # Load the environment
     env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
 
+    #TODO get this from a rosparam
+    right_handed = True
+
     # Set the active manipulator on the robot
     robot.arm.SetActive()
 
@@ -62,19 +68,30 @@ def setup(sim=False, viewer=None, debug=True):
     with env:
         robot.SetTransform(robot_pose)
 
-    iksolver = openravepy.RaveCreateIkSolver(env,"NloptIK")
-    robot.arm.SetIKSolver(iksolver)
-
     # Load the fork into the robot's hand
     tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
     env.Add(tool)
     
     # Fork in end-effector
+    ee_in_world = robot.GetLink('j2n6a300_link_6').GetTransform()
+#    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
+#                              [ 0.,  1., 0., -0.002],
+#                              [ 0.,  0.,  -1., -0.118],
+#                              [ 0.,  0.,  0., 1.]])
+
+
     ee_in_world = robot.arm.GetEndEffectorTransform()
-    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
-                              [ 0.,  1., 0., -0.002],
-                              [ 0.,  0.,  -1., -0.118],
-                              [ 0.,  0.,  0., 1.]])
+    if right_handed:
+        y_trans_tool = 0.004
+    else:
+        y_trans_tool = -0.004
+    tool_in_ee = numpy.array([[ 1., 0.,  0., 0.],
+                            [ 0.,  1., 0., y_trans_tool],
+                            [ 0.,  0.,  1., -0.042],
+                            [ 0.,  0.,  0., 1.]])
+    rotate_tool_in_ee = rodrigues([0., 0., -np.pi/32.])
+    tool_in_ee[0:3, 0:3] = np.dot(rotate_tool_in_ee, tool_in_ee[0:3, 0:3])
+
     tool_in_world = numpy.dot(ee_in_world, tool_in_ee)
     tool.SetTransform(tool_in_world)
     
@@ -178,7 +195,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser('Ada meal scenario')
     parser.add_argument("--debug", action="store_true", help="Run with debug")
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
-    parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
+    parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
     parser.add_argument("--interaction", default='keyboard', help="The type of interaction (joystick, keyboard, username)")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
