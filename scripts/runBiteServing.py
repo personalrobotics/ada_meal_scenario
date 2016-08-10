@@ -13,6 +13,8 @@ import numpy as np
 import IPython
 from time import sleep
 
+import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
+
 from prpy.tsr.rodrigues import *
 
 
@@ -118,6 +120,10 @@ def setup(sim=False, viewer=None, debug=True):
     serving_phrases = ['That looks like a delicious bite ', 
                         'Here you go, I hope you enjoy it ',
                         'That was a good choice ']
+
+    # add boxes for constraint to not hit user
+
+    KinovaStudyHelpers.AddConstraintBoxes(env, robot)
     
     return env, robot
 
