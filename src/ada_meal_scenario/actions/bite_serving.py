@@ -23,7 +23,8 @@ class BiteServing(BypassableAction):
         #action = LookAtFace(bypass = self.bypass)
         #state_pub.publish(action.name)
         #action.execute(manip)
-        
+
+
         # Move to look at plate
         action = LookAtPlate(bypass = self.bypass)
         state_pub.publish(action.name)

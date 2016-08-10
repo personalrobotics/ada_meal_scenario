@@ -49,6 +49,14 @@ def setup(sim=False, viewer=None, debug=True):
     # Set the active manipulator on the robot
     robot.arm.SetActive()
 
+    # Now set everything to the right location in the environment
+    robot_pose = numpy.array([[1., 0., 0., 0.409],
+                              [0., 1., 0., 0.338],
+                              [0., 0., 1., 0.795],
+                              [0., 0., 0., 1.]])
+    with env:
+        robot.SetTransform(robot_pose)
+
     #if sim is True:
     #   startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
     #    -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
@@ -60,13 +68,6 @@ def setup(sim=False, viewer=None, debug=True):
     else:
         robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
     #    robot.SetDOFValues(startConfig)
-    # Now set everything to the right location in the environment
-    robot_pose = numpy.array([[1., 0., 0., 0.409],
-                              [0., 1., 0., 0.338],
-                              [0., 0., 1., 0.795],
-                              [0., 0., 0., 1.]])
-    with env:
-        robot.SetTransform(robot_pose)
 
     # Load the fork into the robot's hand
     tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
@@ -217,9 +218,6 @@ if __name__ == "__main__":
     robot.SetDOFVelocityLimits(old_velocity_limits)
     robot.SetDOFAccelerationLimits(old_acceleration_limits)
  
-
-    #from IPython import embed
-    #embed()
 
     #start by going to ada_meal_scenario_servingConfiguration
     if sim:
