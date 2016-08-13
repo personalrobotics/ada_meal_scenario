@@ -113,8 +113,18 @@ def setup(sim=False, viewer=None, debug=True):
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
     
-    robot.Grab(tool)
-    robot.Grab(fork)
+    #find all finger links
+    finger_link_inds = []
+    grab_link = None
+    for ind,link in enumerate(robot.GetLinks()):
+        if 'inger' in link.GetName():
+            finger_link_inds.append(ind)
+        if 'end_effector' in link.GetName():
+            grab_link = link
+    
+
+    robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
+    robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
 
     # Set serving phrases
     serving_phrases = ['That looks like a delicious bite ', 
@@ -213,16 +223,16 @@ if __name__ == "__main__":
 
     #slow robot down
     #save old limits
-    old_acceleration_limits = robot.GetDOFAccelerationLimits()
-    old_velocity_limits = robot.GetDOFVelocityLimits()
-
-    #slow down robot
-    #robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
-    #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
-
-    robot.SetDOFVelocityLimits(old_velocity_limits)
-    robot.SetDOFAccelerationLimits(old_acceleration_limits)
- 
+#    old_acceleration_limits = robot.GetDOFAccelerationLimits()
+#    old_velocity_limits = robot.GetDOFVelocityLimits()
+#
+#    #slow down robot
+#    #robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
+#    #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
+#
+#    robot.SetDOFVelocityLimits(old_velocity_limits)
+#    robot.SetDOFAccelerationLimits(old_acceleration_limits)
+# 
 
     #start by going to ada_meal_scenario_servingConfiguration
     if sim:

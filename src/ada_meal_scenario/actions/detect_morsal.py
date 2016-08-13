@@ -30,6 +30,7 @@ class DetectMorsal(BypassableAction):
         start_time = time.time()
         time.sleep(1.0) # give time for the camera image to stabilize
         while not env.GetKinBody(morsal_index_to_name(0)) and (timeout is None or time.time() - start_time < timeout):
+            print 'still waiting'
             time.sleep(1.0)
 
         m_detector.stop()
