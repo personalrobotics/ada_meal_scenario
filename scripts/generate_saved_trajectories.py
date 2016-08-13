@@ -6,6 +6,8 @@ from runBiteServing import setup
 from prpy.planning import PlanningError
 from IPython import embed
 
+import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
+
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
@@ -41,10 +43,11 @@ if __name__ == "__main__":
     #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
     try:
-        indices, values = robot.configurations.get_configuration('home')
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')
         robot.SetDOFValues(dofindices=indices, values=values)
 
-        path_to_morselstabbed_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_morselStabbedConfiguration', execute=True)
+        #path_to_morselstabbed_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_morselStabbedConfiguration', execute=True)
+
         #res = openravepy.planningutils.SmoothTrajectory(path_to_morselstabbed_configuration,1, 1, 'ParabolicSmoother', '')
         #robot.ExecuteTrajectory(path_to_morselstabbed_configuration)
         #path_to_looking_at_face = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtFaceConfiguration', execute=False)    

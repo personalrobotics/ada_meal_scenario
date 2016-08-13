@@ -124,7 +124,6 @@ def setup(sim=False, viewer=None, debug=True):
     # add boxes for constraint to not hit user
 
     KinovaStudyHelpers.AddConstraintBoxes(env, robot)
-    
     return env, robot
 
 def pose_to_arrow_markers(pose, ns='axes', id_start=0, lifetime_secs=10):

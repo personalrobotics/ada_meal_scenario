@@ -44,7 +44,7 @@ class DetectMorsal(BypassableAction):
             #  somewhere in the environment
             morsal_in_camera = numpy.eye(4)
             #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
-            morsal_in_camera[:3,3] = [0.05, -0.04, 0.45]
+            morsal_in_camera[:3,3] = [0.02, -0.02, 0.62]
 
             #add random noise
             rand_max_norm = 0.15
@@ -54,7 +54,7 @@ class DetectMorsal(BypassableAction):
             camera_in_world = robot.GetLink('Camera_Depth_Frame').GetTransform()
             morsal_in_world = numpy.dot(camera_in_world, morsal_in_camera)
 #            morsal_in_world[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
-            morsal_in_world[2,3] -= 0.17
+            #morsal_in_world[2,3] -= 0.17
             morsal_in_camera = numpy.dot(numpy.linalg.inv(camera_in_world), morsal_in_world)
 
             m_detector = MorsalDetector(robot)
