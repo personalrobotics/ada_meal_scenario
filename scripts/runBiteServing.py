@@ -17,6 +17,8 @@ import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
 
 from prpy.tsr.rodrigues import *
 
+from ada_meal_scenario.gui_handler import *
+
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -220,6 +222,8 @@ if __name__ == "__main__":
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
     interaction_mode = args.interaction
 
+    gui = GuiHandler()
+
 
     #slow robot down
     #save old limits
@@ -291,8 +295,8 @@ if __name__ == "__main__":
                 joystick_go_signal = False
 
     #restore old limits
-    robot.SetDOFVelocityLimits(old_velocity_limits)
-    robot.SetDOFAccelerationLimits(old_acceleration_limits)
+    #robot.SetDOFVelocityLimits(old_velocity_limits)
+    #robot.SetDOFAccelerationLimits(old_acceleration_limits)
 
     import IPython
     IPython.embed()
