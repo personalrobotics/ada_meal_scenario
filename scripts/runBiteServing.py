@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, random
+import adapy, argparse, logging, numpy, os, sys, openravepy, prpy, rospy, random
 from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
@@ -11,7 +11,7 @@ from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import numpy as np
 import IPython
-from time import sleep
+import time 
 
 import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
 
@@ -196,13 +196,13 @@ def joystick_callback(data):
     if data.buttons[0]:
         joystick_go_signal = True
 
-def tasks_callback(data):
-    global serving_phrases
-    # Announce the bite!
-    if data.data == 'SERVING':
-        # Randomly select one of the serving phrases
-        phrase = random.choice(serving_phrases) + username
-        robot.Say(phrase)
+#def tasks_callback(data):
+#    global serving_phrases
+#    # Announce the bite!
+#    if data.data == 'SERVING':
+#        # Randomly select one of the serving phrases
+#        phrase = random.choice(serving_phrases) + username
+#        robot.Say(phrase)
 
 
 if __name__ == "__main__":
@@ -215,14 +215,12 @@ if __name__ == "__main__":
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
-    parser.add_argument("--interaction", default='keyboard', help="The type of interaction (joystick, keyboard, username)")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
-    interaction_mode = args.interaction
 
-    gui = GuiHandler()
+    gui_queue, gui_process = start_gui_process()
 
 
     #slow robot down
@@ -250,53 +248,40 @@ if __name__ == "__main__":
 #    with prpy.viz.RenderPoses([camera_transform], env):
 
     # Subscribe to the 'ada_tasks' topic (for talking during certain tasks)
-    task_listener = rospy.Subscriber('ada_tasks', String, tasks_callback)
+    #task_listener = rospy.Subscriber('ada_tasks', String, tasks_callback)
 
-    # If input device is joystick, create subscriber to joystick topic
-    if interaction_mode == 'joystick' or interaction_mode == 'username':
-        joy_listener = rospy.Subscriber('/ada/joy', Joy, joystick_callback)
-        joystick_go_signal = False
 
     while True:
+        if gui_queue.empty():
+            time.sleep(0.05)
+            continue
 
-        # Wait for a go signal based on the input device (joystick or keyboard)
-        if interaction_mode == 'keyboard':
-            c = raw_input('Press enter to run (q to quit)')
-            if c == 'q':
-                break
-        elif interaction_mode == 'joystick':
-            rospy.logwarn('Press left joystick button to continue (Ctrl+C to quit)')
-            while not joystick_go_signal:
-                sleep(0.5)
-        elif interaction_mode == 'username':
-            username = raw_input("Enter the user's name: ")
-            rospy.logwarn('Press left joystick button to continue (Ctrl+C to quit)')
-            while not joystick_go_signal:
-                sleep(0.5)
-        else:
-            rospy.logerr("Invalid input device (should be 'joystick' or 'keyboard'): "
-                        % interaction_mode)
+        gui_return = gui_queue.get_nowait()
+
+        if gui_return['quit']:
             break
+        elif gui_return['start']:
+            # Start bite collection and presentation
+            try:
+                manip = robot.GetActiveManipulator()
+                action = BiteServing()
+                action.execute(manip, env, detection_sim=args.detection_sim)
+            except ActionException, e:
+                logger.info('Failed to complete bite serving: %s' % str(e))
+            finally:
+                morsal = env.GetKinBody('morsal')
+                if morsal is not None:
+                    logger.info('Removing morsal from environment')
+                    env.Remove(morsal)
 
-        # Start bite collection and presentation
-        try:
-            manip = robot.GetActiveManipulator()
-            action = BiteServing()
-            action.execute(manip, env, detection_sim=args.detection_sim)
-        except ActionException, e:
-            logger.info('Failed to complete bite serving: %s' % str(e))
-        finally:
-            morsal = env.GetKinBody('morsal')
-            if morsal is not None:
-                logger.info('Removing morsal from environment')
-                env.Remove(morsal)
-
-            if interaction_mode == 'joystick' or interaction_mode == 'username':
-                joystick_go_signal = False
+        
 
     #restore old limits
     #robot.SetDOFVelocityLimits(old_velocity_limits)
     #robot.SetDOFAccelerationLimits(old_acceleration_limits)
+    
+#    import IPython
+#    IPython.embed()
 
-    import IPython
-    IPython.embed()
+    gui_process.terminate()
+
