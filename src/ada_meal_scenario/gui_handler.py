@@ -90,7 +90,7 @@ class GuiHandler(object):
         self.method_label.grid(sticky=Tkinter.W+Tkinter.E)
         
         self.button_mouse = self.init_button_with_callback(self.select_ui_device, 'mouse', 'Mouse', frame)
-        self.button_razer = self.init_button_with_callback(self.select_ui_device, 'razer', 'Razer Hydra', frame)
+        self.button_razer = self.init_button_with_callback(self.select_ui_device, 'hydra', 'Razer Hydra', frame)
         self.button_kinova = self.init_button_with_callback(self.select_ui_device, 'kinova', 'Kinova USB', frame)
 
 
@@ -181,8 +181,6 @@ def start_gui_process():
     p = multiprocessing.Process(target=create_gui, args=(data_queue,))
     p.daemon = True
     p.start()
-
-
 
     return data_queue, p
     

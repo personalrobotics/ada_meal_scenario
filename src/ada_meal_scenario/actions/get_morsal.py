@@ -9,7 +9,7 @@ from assistance_policy_action import AssistancePolicyAction
 from detect_morsal import morsal_index_to_name
 
 
-get_morsal_modes = ['direct', 'blend', 'shared_auton_1', 'shared_auton_2', 'auton']
+#get_morsal_modes = ['direct', 'blend', 'shared_auton_1', 'shared_auton_2', 'auton']
 
 
 def get_all_morsal_bodies(env):
@@ -31,7 +31,7 @@ class GetMorsal(BypassableAction):
         BypassableAction.__init__(self, 'EXECUTING_TRAJECTORY', bypass=bypass)
         
         
-    def _run(self, manip, get_morsal_mode):
+    def _run(self, manip, method, ui_device):
         """
         Execute a sequence of plans that pick up the morsal
         @param manip The manipulator
@@ -82,10 +82,14 @@ class GetMorsal(BypassableAction):
 
       
 
-        if get_morsal_mode == 'shared_auton_1':
+        if 'shared_auton' in method:
+          if method == 'shared_auton_prop':
+            fix_magnitude_user_command = True
+          else:
+            fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose)
-        elif get_morsal_mode == 'auton':
+          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command)
+        elif method == 'autonomous':
           desired_ee_pose = all_desired_ee_pose[0]
           try:
               with prpy.viz.RenderPoses([desired_ee_pose], env):

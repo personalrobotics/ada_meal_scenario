@@ -14,7 +14,7 @@ class BiteServing(BypassableAction):
     def __init__(self, bypass = False):
         BypassableAction.__init__(self, 'BiteServing', bypass=bypass)
 
-    def execute(self, manip, env, detection_sim=False):
+    def execute(self, manip, env, method, ui_device, detection_sim=False):
         
         # TODO: Does this need to be publishing regularly
         state_pub = rospy.Publisher('ada_tasks',String, queue_size=10)
@@ -40,7 +40,7 @@ class BiteServing(BypassableAction):
         # Move to get object
         action = GetMorsal(bypass = self.bypass)
         state_pub.publish(action.name)
-        action.execute(manip, 'auton')
+        action.execute(manip, method, ui_device)
 
         # Serve the morsal
         action = Serve(bypass = self.bypass)

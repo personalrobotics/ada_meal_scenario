@@ -256,7 +256,7 @@ if __name__ == "__main__":
             time.sleep(0.05)
             continue
 
-        gui_return = gui_queue.get_nowait()
+        gui_return = gui_queue.get()
 
         if gui_return['quit']:
             break
@@ -265,7 +265,7 @@ if __name__ == "__main__":
             try:
                 manip = robot.GetActiveManipulator()
                 action = BiteServing()
-                action.execute(manip, env, detection_sim=args.detection_sim)
+                action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], detection_sim=args.detection_sim)
             except ActionException, e:
                 logger.info('Failed to complete bite serving: %s' % str(e))
             finally:
@@ -273,8 +273,6 @@ if __name__ == "__main__":
                 if morsal is not None:
                     logger.info('Removing morsal from environment')
                     env.Remove(morsal)
-
-        
 
     #restore old limits
     #robot.SetDOFVelocityLimits(old_velocity_limits)
