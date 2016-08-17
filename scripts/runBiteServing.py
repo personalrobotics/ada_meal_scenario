@@ -78,7 +78,7 @@ def setup(sim=False, viewer=None, debug=True):
     env.Add(tool)
     
     # Fork in end-effector
-    ee_in_world = robot.GetLink('j2n6a300_link_6').GetTransform()
+    #ee_in_world = robot.GetLink('j2n6a300_link_6').GetTransform()
 #    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
 #                              [ 0.,  1., 0., -0.002],
 #                              [ 0.,  0.,  -1., -0.118],

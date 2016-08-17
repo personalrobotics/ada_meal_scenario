@@ -58,7 +58,7 @@ class GetMorsal(BypassableAction):
             
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
-        xoffset = 0.0
+        xoffset = -0.02
         yoffset = 0.00
         zoffset = -0.07
         for pose in all_desired_ee_pose:
@@ -176,9 +176,9 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #xoffset = -0.185
     #yoffset = 0.06
     
-    xoffset = 0.01
-    yoffset = -0.01#-0.005
-    zoffset = 0.06
+    xoffset = 0.0
+    yoffset = 0.0#-0.005
+    zoffset = 0.08
 
     desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
     desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
