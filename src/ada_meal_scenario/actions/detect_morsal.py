@@ -18,7 +18,6 @@ class DetectMorsal(BypassableAction):
 
 
     def _run(self, robot, timeout=None):
-
         self.remove_morsals_next_indices(robot.GetEnv(), 0)
         
         m_detector = MorsalDetector(robot)
@@ -36,6 +35,8 @@ class DetectMorsal(BypassableAction):
 
         if not env.GetKinBody(morsal_index_to_name(0)):
             raise ActionException(self, 'Failed to detect any morsals.')
+
+        logger.info('Morsel detected.')
 
     def _bypass(self, robot, num_morsals=2):
 
