@@ -30,11 +30,12 @@ class BiteServing(BypassableAction):
         action.execute(manip)
 
         # Detect morsal
+        timeout = 5 # duration to wait to detect morsel
         if self.bypass:
             detection_sim = True
         action = DetectMorsal(bypass = detection_sim)
         state_pub.publish(action.name)
-        action.execute(manip.GetRobot())
+        action.execute(manip.GetRobot(), timeout = timeout)
                     
         # Move to get object
         action = GetMorsal(bypass = self.bypass)
