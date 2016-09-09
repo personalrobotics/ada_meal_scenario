@@ -25,6 +25,7 @@ class BiteServing(BypassableAction):
         #action.execute(manip)
         
         # Move to look at plate
+        logger.info('Starting look at plate.')
         action = LookAtPlate(bypass = self.bypass)
         state_pub.publish(action.name)
         action.execute(manip)
@@ -32,16 +33,19 @@ class BiteServing(BypassableAction):
         # Detect morsal
         if self.bypass:
             detection_sim = True
+        logger.info('Starting detect morsel.')
         action = DetectMorsal(bypass = detection_sim)
         state_pub.publish(action.name)
         action.execute(manip.GetRobot())
                     
         # Move to get object
+        logger.info('Starting get morsel.')
         action = GetMorsal(bypass = self.bypass)
         state_pub.publish(action.name)
         action.execute(manip)
 
         # Serve the morsal
+        logger.info('Starting serve.')
         action = Serve(bypass = self.bypass)
         state_pub.publish(action.name)
         action.execute(manip)
