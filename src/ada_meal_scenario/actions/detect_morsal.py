@@ -26,18 +26,16 @@ class DetectMorsal(BypassableAction):
 
         # Now wait for the morsal to be detected
         env = robot.GetEnv()
-        logger.info('Waiting to detect morsel.')
+        logger.info('Waiting to detect morsal')
         start_time = time.time()
-        time.sleep(0) # don't give time for the camera image to stabilize (changed from 1.0)
+        time.sleep(1.0) # give time for the camera image to stabilize
         while not env.GetKinBody(morsal_index_to_name(0)) and (timeout is None or time.time() - start_time < timeout):
             time.sleep(1.0)
 
         m_detector.stop()
 
-        if env.GetKinBody(morsal_index_to_name(0)):
-            logger.info("Morsel detected: " + str(env.GetKinBody(morsal_index_to_name(0))))
-        else: 
-            raise ActionException(self, 'Failed to detect any morsels.')
+        if not env.GetKinBody(morsal_index_to_name(0)):
+            raise ActionException(self, 'Failed to detect any morsals.')
 
     def _bypass(self, robot, num_morsals=2):
 
@@ -132,7 +130,7 @@ class MorsalDetector(object):
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
         morsal_pos = numpy.asarray(pts_arr)
-        if(morsal_pos is None) or (len(morsal_pos)==0):
+        if(morsal_pos is None) or(len(morsal_pos)==0):
             return
 
         for i in range(len(morsal_pos)):

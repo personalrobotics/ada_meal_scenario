@@ -77,7 +77,7 @@ def setup(sim=False, viewer=None, debug=True):
                               [ 0.,  0.,  0., 1.]])
     tool_in_world = numpy.dot(ee_in_world, tool_in_ee)
     tool.SetTransform(tool_in_world)
-
+    
     fork = env.ReadKinBodyURI('objects/fork.kinbody.xml')
     env.Add(fork)
     fork_in_hole = numpy.array([[1.,0.,0.,0.],
@@ -235,10 +235,8 @@ if __name__ == "__main__":
             while not joystick_go_signal:
                 sleep(0.5)
         elif interaction_mode == 'username':
-            username = raw_input("Enter the user's name (q to quit): ")
-            if username == 'q':
-                break
-            rospy.logwarn('Press left joystick button to continue')
+            username = raw_input("Enter the user's name: ")
+            rospy.logwarn('Press left joystick button to continue (Ctrl+C to quit)')
             while not joystick_go_signal:
                 sleep(0.5)
         else:
@@ -253,6 +251,12 @@ if __name__ == "__main__":
             action.execute(manip, env, detection_sim=args.detection_sim)
         except ActionException, e:
             logger.info('Failed to complete bite serving: %s' % str(e))
+            # return to ada_meal_scenario_servingConfiguration
+            if sim:
+                indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
+                robot.SetDOFValues(dofindices=indices, values=values)
+            else:
+                robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
         finally:
             morsal = env.GetKinBody('morsal')
             if morsal is not None:
