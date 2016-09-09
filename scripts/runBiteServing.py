@@ -77,7 +77,7 @@ def setup(sim=False, viewer=None, debug=True):
                               [ 0.,  0.,  0., 1.]])
     tool_in_world = numpy.dot(ee_in_world, tool_in_ee)
     tool.SetTransform(tool_in_world)
-    
+
     fork = env.ReadKinBodyURI('objects/fork.kinbody.xml')
     env.Add(fork)
     fork_in_hole = numpy.array([[1.,0.,0.,0.],
@@ -235,8 +235,10 @@ if __name__ == "__main__":
             while not joystick_go_signal:
                 sleep(0.5)
         elif interaction_mode == 'username':
-            username = raw_input("Enter the user's name: ")
-            rospy.logwarn('Press left joystick button to continue (Ctrl+C to quit)')
+            username = raw_input("Enter the user's name (q to quit): ")
+            if username == 'q':
+                break
+            rospy.logwarn('Press left joystick button to continue')
             while not joystick_go_signal:
                 sleep(0.5)
         else:
