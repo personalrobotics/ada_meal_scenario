@@ -19,6 +19,9 @@ from prpy.tsr.rodrigues import *
 
 from ada_meal_scenario.gui_handler import *
 
+import warnings
+warnings.simplefilter(action = "ignore", category = FutureWarning)
+
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
@@ -123,10 +126,19 @@ def setup(sim=False, viewer=None, debug=True):
             finger_link_inds.append(ind)
         if 'end_effector' in link.GetName():
             grab_link = link
-    
+
+    robot.arm.hand.CloseHand()
 
     robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
+
+#    print 'grab link: ' + str(grab_link)
+#    print 'links to ignore: ' + str(finger_link_inds)
+#
+#    print 'grabbed name: ' + str(robot.GetGrabbedInfo()[0]._grabbedname)
+#    print 'ee name: ' + str(robot.GetGrabbedInfo()[0]._robotlinkname)
+#    print 'links ignored' + str(robot.GetGrabbedInfo()[0]._setRobotLinksToIgnore)
+
 
     # Set serving phrases
     serving_phrases = ['That looks like a delicious bite ', 
@@ -220,7 +232,7 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
-    gui_queue, gui_process = start_gui_process()
+    gui_get_event, gui_queue, gui_process = start_gui_process()
 
 
     #slow robot down
@@ -253,6 +265,7 @@ if __name__ == "__main__":
 
     while True:
         if gui_queue.empty():
+            gui_get_event.set()
             time.sleep(0.05)
             continue
 

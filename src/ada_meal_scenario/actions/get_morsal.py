@@ -4,6 +4,8 @@ from prpy.planning.base import PlanningError
 import time
 import openravepy
 
+#from prpy.ik_ranking import MultipleNominalConfigurations
+
 from assistance_policy_action import AssistancePolicyAction
 
 from detect_morsal import morsal_index_to_name
@@ -89,16 +91,20 @@ class GetMorsal(BypassableAction):
             fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
           assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command)
+        #elif method == 'blend': #TODO add blend
+          #continue
+        
         elif method == 'autonomous':
           desired_ee_pose = all_desired_ee_pose[0]
           try:
               with prpy.viz.RenderPoses([desired_ee_pose], env):
 
+                  #since we know we will soon go to stabbed, rank iks based on both stabbed and current
+                  #ik_ranking_nominal_configs = [robot.arm.GetDOFValues(), numpy.array(robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')[1])]
+                  #ik_ranker = MultipleNominalConfigurations(ik_ranking_nominal_configs)
+                  #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True, ranker=ik_ranker)
+
                   path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
-                  
-                  #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
-                  #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'HauserParabolicSmoother', '')
-                  #robot.ExecuteTrajectory(path)
 
           except PlanningError, e:
               raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))

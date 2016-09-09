@@ -12,7 +12,7 @@ from multiprocessing import Queue
 default_bg_color = None
 
 class GuiHandler(object):
-    def __init__(self, return_queue):
+    def __init__(self, get_gui_state_event, return_queue):
         self.master = Tkinter.Tk()
         #self.method = None
         #self.ui_device = None
@@ -21,6 +21,7 @@ class GuiHandler(object):
         self.start_next_trail = False
         self.quit = False
 
+        self.get_gui_state_event = get_gui_state_event
         self.return_queue = return_queue
 
         self.default_font = tkFont.nametofont("TkDefaultFont")
@@ -60,7 +61,6 @@ class GuiHandler(object):
         self.quit_button = Tkinter.Button(self.start_frame, text="Quit", command=self.quit_button_callback)
         self.quit_button.grid(sticky=Tkinter.W+Tkinter.E)
 
-
         #self.all_buttons[arg] = b
 
         self.method='autonomous'
@@ -68,7 +68,17 @@ class GuiHandler(object):
         self.color_buttons()
 
     def mainloop(self):
-        self.master.mainloop()
+        #self.master.mainloop()
+        import time
+        while True:
+            self.master.update_idletasks()
+            self.master.update()
+
+            if self.get_gui_state_event.is_set():
+                self.add_return_to_queue()
+           
+            time.sleep(0.01)
+
 
     def init_method_buttons(self, frame):
         label_font = self.default_font.copy()
@@ -116,14 +126,14 @@ class GuiHandler(object):
 
     def start_button_callback(self):
         self.start_next_trail = toggle_trial_button_callback(self.start_button, self.start_next_trail)
-        self.add_return_to_queue()
+        #self.add_return_to_queue()
 
     def record_button_callback(self):
         self.record_next_trail = toggle_trial_button_callback(self.record_button, self.record_next_trail)
 
     def quit_button_callback(self):
         self.quit = toggle_trial_button_callback(self.quit_button, self.quit)
-        self.add_return_to_queue()
+        #self.add_return_to_queue()
 
 
     def add_return_to_queue(self):
@@ -167,8 +177,8 @@ def configure_button_not_selected(button):
     button.configure(bg=default_bg_color, activebackground="white")
 
 
-def create_gui(data_queue):
-    gui = GuiHandler(data_queue)
+def create_gui(get_gui_state_event, data_queue):
+    gui = GuiHandler(get_gui_state_event, data_queue)
     import signal
     import sys
     signal.signal(signal.SIGTERM, lambda signum, stack_frame: sys.exit())
@@ -177,12 +187,13 @@ def create_gui(data_queue):
     
 
 def start_gui_process():
+    get_gui_state_event = multiprocessing.Event()
     data_queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=create_gui, args=(data_queue,))
+    p = multiprocessing.Process(target=create_gui, args=(get_gui_state_event, data_queue,))
     p.daemon = True
     p.start()
 
-    return data_queue, p
+    return get_gui_state_event, data_queue, p
     
 
 
