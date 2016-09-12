@@ -9,6 +9,8 @@ import time
 import logging
 logger = logging.getLogger('ada_meal_scenario')
 
+from direct_teleop_action import DirectTeleopAction
+
 class BiteServing(BypassableAction):
 
     def __init__(self, bypass = False):
@@ -25,24 +27,34 @@ class BiteServing(BypassableAction):
         #action.execute(manip)
 
 
-        # Move to look at plate
-        action = LookAtPlate(bypass = self.bypass)
-        state_pub.publish(action.name)
-        action.execute(manip)
+        #if direct teleop, skip sequence
+        if method == 'direct':
+          direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
+          direct_teleop_action.execute(manip, ui_device)
 
-        # Detect morsal
-        if self.bypass:
-            detection_sim = True
-        action = DetectMorsal(bypass = detection_sim)
-        state_pub.publish(action.name)
-        action.execute(manip.GetRobot())
-                    
-        # Move to get object
-        action = GetMorsal(bypass = self.bypass)
-        state_pub.publish(action.name)
-        action.execute(manip, method, ui_device)
+          #make sure we end at serving
+          manip.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
+        else:
 
-        # Serve the morsal
-        action = Serve(bypass = self.bypass)
-        state_pub.publish(action.name)
-        action.execute(manip)
+          # Move to look at plate
+          action = LookAtPlate(bypass = self.bypass)
+          state_pub.publish(action.name)
+          action.execute(manip)
+
+          # Detect morsal
+          if self.bypass:
+              detection_sim = True
+          action = DetectMorsal(bypass = detection_sim)
+          state_pub.publish(action.name)
+          action.execute(manip.GetRobot())
+                      
+          # Move to get object
+          action = GetMorsal(bypass = self.bypass)
+          state_pub.publish(action.name)
+          action.execute(manip, method, ui_device)
+
+    
+          # Serve the morsal
+          action = Serve(bypass = self.bypass)
+          state_pub.publish(action.name)
+          action.execute(manip)

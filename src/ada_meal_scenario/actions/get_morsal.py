@@ -4,7 +4,7 @@ from prpy.planning.base import PlanningError
 import time
 import openravepy
 
-#from prpy.ik_ranking import MultipleNominalConfigurations
+from prpy.ik_ranking import MultipleNominalConfigurations
 
 from assistance_policy_action import AssistancePolicyAction
 
@@ -57,6 +57,9 @@ class GetMorsal(BypassableAction):
                                            for morsal in all_morsals]
         else:
             all_desired_ee_pose = [Get_Prestab_Pose_For_Morsal(morsal, fork, manip) for morsal in all_morsals]
+            #remove None
+            print all_desired_ee_pose
+            all_desired_ee_pose = [pose for pose in all_desired_ee_pose if pose is not None]
             
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
@@ -90,41 +93,24 @@ class GetMorsal(BypassableAction):
           else:
             fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command)
-        #elif method == 'blend': #TODO add blend
-          #continue
-        
+          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command)
+        elif method == 'blend': #TODO add blend
+          assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
+          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True)
         elif method == 'autonomous':
           desired_ee_pose = all_desired_ee_pose[0]
           try:
               with prpy.viz.RenderPoses([desired_ee_pose], env):
 
                   #since we know we will soon go to stabbed, rank iks based on both stabbed and current
-                  #ik_ranking_nominal_configs = [robot.arm.GetDOFValues(), numpy.array(robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')[1])]
-                  #ik_ranker = MultipleNominalConfigurations(ik_ranking_nominal_configs)
-                  #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True, ranker=ik_ranker)
+                  ik_ranking_nominal_configs = [robot.arm.GetDOFValues(), numpy.array(robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')[1])]
+                  ik_ranker = MultipleNominalConfigurations(ik_ranking_nominal_configs)
+                  path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True, ranker=ik_ranker)
 
-                  path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
+                  #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
 
           except PlanningError, e:
               raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
-
-        
-
-#        # Plan near morsal
-#        try:
-#            with prpy.viz.RenderPoses([desired_ee_pose, desired_fork_tip_in_world], env):
-#                
-#
-#
-#                path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
-#                
-#                #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=False)
-#                #res = openravepy.planningutils.SmoothTrajectory(path,1, 1, 'HauserParabolicSmoother', '')
-#                #robot.ExecuteTrajectory(path)
-#
-#        except PlanningError, e:
-#            raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
 
 
 
@@ -195,6 +181,18 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     ee_in_fork_tip = numpy.dot(numpy.linalg.inv(fork_tip_in_world),
                             ee_in_world)
     desired_ee_pose = numpy.dot(desired_fork_tip_in_world, ee_in_fork_tip)
+
+    #check to make sure ik solutions exist
+    robot = manip.GetRobot()
+    with robot:
+        ik_filter_options = openravepy.IkFilterOptions.CheckEnvCollisions
+        #first call FindIKSolution which is faster if it succeeds
+        ik_sol = manip.FindIKSolution(desired_ee_pose, ik_filter_options)
+        #if it fails, call FindIKSolutions, which is slower but samples other start configurations
+        if ik_sol is None:
+            ik_sols = manip.FindIKSolutions(desired_ee_pose, ik_filter_options)
+            if ik_sols is None:
+                return None
 
     return desired_ee_pose
 

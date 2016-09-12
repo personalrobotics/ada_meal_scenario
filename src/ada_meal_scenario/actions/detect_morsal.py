@@ -33,12 +33,17 @@ class DetectMorsal(BypassableAction):
             print 'still waiting'
             time.sleep(1.0)
 
+        #filter bad detections
+        inds_to_filter = FilterMorsalsOnTable(env.GetKinBody('table'), m_detector.all_morsals)
+        self.filter_morsal_inds(env, inds_to_filter, m_detector.all_morsals)
+        ProjectMorsalsOnTable(env.GetKinBody('table'), m_detector.all_morsals)
+
         m_detector.stop()
 
         if not env.GetKinBody(morsal_index_to_name(0)):
             raise ActionException(self, 'Failed to detect any morsals.')
 
-    def _bypass(self, robot, num_morsals=8):
+    def _bypass(self, robot, num_morsals=3):
 
         m_detector = MorsalDetector(robot)
         for i in range(num_morsals):
