@@ -193,7 +193,7 @@ def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.01):
     for dist,morsal in zip(all_morsal_dists, morsals):
         morsal_transform = morsal.GetTransform()
         morsal_transform[2,3] -= dist - dist_above_table
-        #morsal.SetTransform(morsal_transform)
+        morsal.SetTransform(morsal_transform)
     
 
 def FilterMorsalsOnTable(table, morsals, thresh_dist_below_table=0.0, thresh_dist_above_table=0.1):
