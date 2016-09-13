@@ -189,7 +189,6 @@ def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.01):
     @param dist_above_table distance you want the bottom of the morsal to be above the table
     """
     all_morsal_dists = GetAllDistsTableToObjects(table, morsals)
-    print 'ALL MORSAL DISTS: ' + str(all_morsal_dists)
     for dist,morsal in zip(all_morsal_dists, morsals):
         morsal_transform = morsal.GetTransform()
         morsal_transform[2,3] -= dist - dist_above_table

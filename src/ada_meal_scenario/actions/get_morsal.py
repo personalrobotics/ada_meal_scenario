@@ -58,7 +58,6 @@ class GetMorsal(BypassableAction):
         else:
             all_desired_ee_pose = [Get_Prestab_Pose_For_Morsal(morsal, fork, manip) for morsal in all_morsals]
             #remove None
-            print all_desired_ee_pose
             all_desired_ee_pose = [pose for pose in all_desired_ee_pose if pose is not None]
             
           
@@ -129,7 +128,7 @@ class GetMorsal(BypassableAction):
             curr_height = manip.GetEndEffectorTransform()[2,3]
 
             distance = curr_height - desired_height
-            print 'distance: ' + str(distance)
+            print 'distance moving down: ' + str(distance)
 
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
                                        direction=direction, length=distance, env=env):
