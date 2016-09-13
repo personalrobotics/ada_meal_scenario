@@ -137,7 +137,7 @@ def setup(sim=False, viewer=None, debug=True):
         if 'end_effector' in link.GetName():
             grab_link = link
 
-    robot.arm.hand.CloseHand()
+    robot.arm.hand.CloseHand(1.2)
 
     robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
