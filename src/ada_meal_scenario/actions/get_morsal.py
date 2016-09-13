@@ -62,7 +62,7 @@ class GetMorsal(BypassableAction):
             
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
-        xoffset = -0.02
+        xoffset = 0.00
         yoffset = 0.00
         zoffset = -0.07
         for pose in all_desired_ee_pose:
