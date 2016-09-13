@@ -57,10 +57,20 @@ def setup(sim=False, viewer=None, debug=True):
     robot.arm.SetActive()
 
     # Now set everything to the right location in the environment
-    robot_pose = numpy.array([[1., 0., 0., 0.409],
+    #if using jaco, assume we have the portable mount, and robot should have a different distance to table
+    using_jaco = robot.GetName() == 'JACO'
+    if using_jaco:
+      robot_pose = numpy.array([[1., 0., 0., 0.409],
+                              [0., 1., 0., 0.338],
+                              [0., 0., 1., 0.754],
+                              [0., 0., 0., 1.]])
+    else:
+      robot_pose = numpy.array([[1., 0., 0., 0.409],
                               [0., 1., 0., 0.338],
                               [0., 0., 1., 0.795],
                               [0., 0., 0., 1.]])
+
+
     with env:
         robot.SetTransform(robot_pose)
 
@@ -227,13 +237,13 @@ if __name__ == "__main__":
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
+    parser.add_argument("--jaco", action="store_true", default=False, help="Using jaco robot")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
     gui_get_event, gui_queue, gui_process = start_gui_process()
-
 
     #slow robot down
     #save old limits

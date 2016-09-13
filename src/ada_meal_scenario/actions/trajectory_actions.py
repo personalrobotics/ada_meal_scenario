@@ -10,7 +10,7 @@ logger = logging.getLogger(project_name)
 
 class RunTrajectory(BypassableAction):
 
-    def __init__(self, name, trajfile, bypass=False):
+    def __init__(self, name, traj_path, traj_filename_base, bypass=False):
         """
         @param name The name of the action
         @param trajfile The full path ato the trajectory file
@@ -19,10 +19,12 @@ class RunTrajectory(BypassableAction):
         """
         BypassableAction.__init__(self, name, bypass=bypass)
         self.traj = None
-        self.trajfile = trajfile
+        self.traj_path = traj_path
+        self.traj_filename_base = traj_filename_base
 
-    def _load_traj(self, env):
-        self.traj = prpy.rave.load_trajectory(env, self.trajfile)
+    def _load_traj(self, env, robot):
+        traj_filename = get_traj_filename(self.traj_path, robot.GetName(), self.traj_filename_base)
+        self.traj = prpy.rave.load_trajectory(env, traj_filename)
         
     def _run(self, manip):
         
@@ -30,7 +32,7 @@ class RunTrajectory(BypassableAction):
         env = robot.GetEnv()
 
         if self.traj is None:
-            self._load_traj(env)
+            self._load_traj(env, robot)
 
 
 
@@ -100,9 +102,9 @@ class LookAtFace(RunTrajectory):
         if len(traj_path) == 0:
             raise ActionException(self, 'Failed to find trajectory data path')
         
-        trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_lookingAtFace.xml')
+        #trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_lookingAtFace.xml')
 
-        RunTrajectory.__init__(self, "LOOKING_AT_FACE", trajfile, bypass=bypass)
+        RunTrajectory.__init__(self, "LOOKING_AT_FACE", traj_path[0], 'traj_lookingAtFace.xml', bypass=bypass)
 
     
 class LookAtPlate(RunTrajectory):
@@ -121,9 +123,9 @@ class LookAtPlate(RunTrajectory):
         if len(traj_path) == 0:
             raise ActionException(self, 'Failed to find trajectory data path')
         
-        trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_lookingAtPlate.xml')
+        #trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_lookingAtPlate.xml')
 
-        RunTrajectory.__init__(self, "LOOKING_AT_PLATE", trajfile, bypass=bypass)
+        RunTrajectory.__init__(self, "LOOKING_AT_PLATE", traj_path[0], 'traj_lookingAtPlate.xml', bypass=bypass)
 
 class Serve(RunTrajectory):
 
@@ -138,7 +140,12 @@ class Serve(RunTrajectory):
         if len(traj_path) == 0:
             raise ActionException(self, 'Failed to find trajectory data path')
         
-        trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_serving.xml')
+        #trajfile = os.path.join(traj_path[0], 'trajectories', 'traj_serving.xml')
 
-        RunTrajectory.__init__(self, "SERVING", trajfile, bypass=bypass)
+        RunTrajectory.__init__(self, "SERVING", traj_path[0], 'traj_serving.xml', bypass=bypass)
+
+
+def get_traj_filename(traj_path, robot_name, traj_filename_base):
+    return os.path.join(traj_path, 'trajectories', robot_name + '_' + traj_filename_base)
+
 

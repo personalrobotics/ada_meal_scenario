@@ -67,10 +67,10 @@ class DetectMorsal(BypassableAction):
 
             m_detector.add_morsal(morsal_in_camera, morsal_index_to_name(i))
 
-        num_morsals_before_filter = len(all_morsals)
         env = robot.GetEnv()
-        
         all_morsals = GetAllMorsalsInEnv(env)
+        num_morsals_before_filter = len(all_morsals)
+        
         ProjectMorsalsOnTable(env.GetKinBody('table'), all_morsals)
         inds_to_filter = FilterMorsalsOnTable(env.GetKinBody('table'), all_morsals)
         self.filter_morsal_inds(env, inds_to_filter, all_morsals)
@@ -188,7 +188,7 @@ def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.01):
     @param morsals list of all morsals to project
     @param dist_above_table distance you want the bottom of the morsal to be above the table
     """
-    all_morsal_dists = GetAllDistsTableToMorsal(table, morsals)
+    all_morsal_dists = GetAllDistsTableToObjects(table, morsals)
     print 'ALL MORSAL DISTS: ' + str(all_morsal_dists)
     for dist,morsal in zip(all_morsal_dists, morsals):
         morsal_transform = morsal.GetTransform()
@@ -209,7 +209,7 @@ def FilterMorsalsOnTable(table, morsals, thresh_dist_below_table=0.0, thresh_dis
 
     @return indices of morsals either below the table more then threshhold, or above by more then threshhold
     """
-    all_morsal_dists = GetAllDistsTableToMorsal(table, morsals)
+    all_morsal_dists = GetAllDistsTableToObjects(table, morsals)
     inds_to_filter = []
     for ind,dist in enumerate(all_morsal_dists):
         if dist < thresh_dist_below_table or dist > thresh_dist_above_table:
@@ -218,20 +218,20 @@ def FilterMorsalsOnTable(table, morsals, thresh_dist_below_table=0.0, thresh_dis
     return inds_to_filter
 
 
-def GetAllDistsTableToMorsal(table, morsals):
-    """ Get the distance between the top of the table and the bottom of each morsal
+def GetAllDistsTableToObjects(table, objects):
+    """ Get the distance between the top of the table and the bottom of each object
 
     @param table the table kinbody
-    @param morsals list of all morsals to project
-    @return the distance between the bottom of each morsal and the top of the table
+    @param objects list of all objects 
+    @return the distance between the bottom of each object and the top of the table
     """
     table_aabb = table.ComputeAABB()
     top_of_table = table_aabb.pos()[2] + table_aabb.extents()[2]
     dists = []
-    for morsal in morsals:
-        morsal_aabb = morsal.ComputeAABB()
-        bottom_of_morsal = morsal_aabb.pos()[2] - morsal_aabb.extents()[2]
-        dist_diff = bottom_of_morsal - top_of_table
+    for object in objects:
+        object_aabb = object.ComputeAABB()
+        bottom_of_object = object_aabb.pos()[2] - object_aabb.extents()[2]
+        dist_diff = bottom_of_object - top_of_table
         dists.append(dist_diff)
     return dists
 
