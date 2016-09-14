@@ -7,6 +7,7 @@ import openravepy
 from prpy.ik_ranking import MultipleNominalConfigurations
 
 from assistance_policy_action import AssistancePolicyAction
+from direct_teleop_action import DirectTeleopAction
 
 from detect_morsal import morsal_index_to_name
 
@@ -96,6 +97,9 @@ class GetMorsal(BypassableAction):
         elif method == 'blend': #TODO add blend
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
           assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True)
+        elif method == 'direct':
+          direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
+          direct_teleop_action.execute(manip, ui_device)
         elif method == 'autonomous':
           desired_ee_pose = all_desired_ee_pose[0]
           try:

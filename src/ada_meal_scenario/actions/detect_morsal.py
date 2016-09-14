@@ -124,6 +124,16 @@ class MorsalDetector(object):
         self.robot = robot
         self.sub = None
 
+        #keep track of hypotheses for morsal locations
+        self.morsal_pos_hypotheses = []
+        self.morsal_pos_hypotheses_counts = []
+        #require this many consecutive detections to add morsals
+        self.min_counts_required_addmorsals = 4
+        #once that threshhold is reached for any morsal, require this many counts per morsal to add
+        self.min_counts_required = 3
+        #if less then this treshhold distance, count as consecutive
+        self.distance_thresh_count = 0.015
+
     def start(self):
         logger.info('Subscribing to morsal detection')
         self.sub = rospy.Subscriber("/perception/morsel_detection", 
@@ -169,16 +179,41 @@ class MorsalDetector(object):
         logger.debug('Received detection')
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
-        morsal_pos = numpy.asarray(pts_arr)
-        if(morsal_pos is None) or(len(morsal_pos)==0):
+        morsal_positions = numpy.asarray(pts_arr)
+        if(morsal_positions is None) or(len(morsal_positions)==0):
             return
 
-        for i in range(len(morsal_pos)):
-          morsal_in_camera = numpy.eye(4)
-          morsal_in_camera[:3,3] = morsal_pos[i]
+        next_hypoths = []
+        next_hypoth_counts = []
+        for morsal_pos in morsal_positions:
+          dists_all_hypotheses = [numpy.linalg.norm(h - morsal_pos) for h in self.morsal_pos_hypotheses]
 
-          #check 
-          self.add_morsal(morsal_in_camera, morsal_index_to_name(i))
+          #if none of the distances less then thresh, count as a new detection
+          if len(dists_all_hypotheses) == 0 or min(dists_all_hypotheses) > self.distance_thresh_count:
+            next_hypoths.append(morsal_pos)
+            next_hypoth_counts.append(1)
+          else:
+            ind = numpy.argmin(dists_all_hypotheses)
+            #average with old pos
+            old_count = self.morsal_pos_hypotheses_counts[ind]
+            new_hypoth_pos = (self.morsal_pos_hypotheses[ind]*old_count + morsal_pos) / (float(old_count + 1))
+
+            next_hypoths.append(new_hypoth_pos)
+            next_hypoth_counts.append(old_count+1)
+          
+
+        self.morsal_pos_hypotheses = next_hypoths
+        self.morsal_pos_hypotheses_counts = next_hypoth_counts
+
+        #if any detection exceeds min count, add all detections with that count
+        if max(self.morsal_pos_hypotheses_counts) >= self.min_counts_required_addmorsals:
+          morsal_index = 0
+          for hypoth_pos, hypoth_pos_count in zip(self.morsal_pos_hypotheses, self.morsal_pos_hypotheses_counts):
+            if hypoth_pos_count >= self.min_counts_required:
+              morsal_in_camera = numpy.eye(4)
+              morsal_in_camera[:3,3] = hypoth_pos
+              self.add_morsal(morsal_in_camera, morsal_index_to_name(morsal_index))
+              morsal_index += 1
         
 
 def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.01):
