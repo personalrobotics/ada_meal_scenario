@@ -243,7 +243,7 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
-    gui_get_event, gui_queue, gui_process = start_gui_process()
+    gui_get_event, gui_trial_starting_event, gui_queue, gui_process = start_gui_process()
 
     #slow robot down
     #save old limits
@@ -274,8 +274,9 @@ if __name__ == "__main__":
 
 
     while True:
-        if gui_queue.empty():
-            gui_get_event.set()
+        empty_queue(gui_queue)
+        gui_get_event.set()
+        while gui_queue.empty():
             time.sleep(0.05)
             continue
 
@@ -284,6 +285,8 @@ if __name__ == "__main__":
         if gui_return['quit']:
             break
         elif gui_return['start']:
+            #tell gui we are starting to reset next trial
+            gui_trial_starting_event.set()
             # Start bite collection and presentation
             try:
                 manip = robot.GetActiveManipulator()

@@ -7,21 +7,23 @@ from functools import partial
 
 from threading import Lock
 import multiprocessing
+from Queue import Empty
 from multiprocessing import Queue
 
 default_bg_color = None
 
 class GuiHandler(object):
-    def __init__(self, get_gui_state_event, return_queue):
+    def __init__(self, get_gui_state_event, trial_starting_event, return_queue):
         self.master = Tkinter.Tk()
         #self.method = None
         #self.ui_device = None
         self.all_buttons = dict()
-        self.record_next_trail = False
-        self.start_next_trail = False
+        self.record_next_trial = False
+        self.start_next_trial = False
         self.quit = False
 
         self.get_gui_state_event = get_gui_state_event
+        self.trial_starting_event = trial_starting_event
         self.return_queue = return_queue
 
         self.default_font = tkFont.nametofont("TkDefaultFont")
@@ -76,6 +78,12 @@ class GuiHandler(object):
 
             if self.get_gui_state_event.is_set():
                 self.add_return_to_queue()
+                self.get_gui_state_event.clear()
+
+            if self.trial_starting_event.is_set():
+                self.start_next_trial = False
+                configure_button_not_selected(self.start_button)
+                self.trial_starting_event.clear()
            
             time.sleep(0.01)
 
@@ -125,11 +133,11 @@ class GuiHandler(object):
         self.color_buttons()
 
     def start_button_callback(self):
-        self.start_next_trail = toggle_trial_button_callback(self.start_button, self.start_next_trail)
+        self.start_next_trial = toggle_trial_button_callback(self.start_button, self.start_next_trial)
         #self.add_return_to_queue()
 
     def record_button_callback(self):
-        self.record_next_trail = toggle_trial_button_callback(self.record_button, self.record_next_trail)
+        self.record_next_trial = toggle_trial_button_callback(self.record_button, self.record_next_trial)
 
     def quit_button_callback(self):
         self.quit = toggle_trial_button_callback(self.quit_button, self.quit)
@@ -138,19 +146,19 @@ class GuiHandler(object):
 
     def add_return_to_queue(self):
         curr_selected = self.get_selected_options()
-        while not self.return_queue.empty():
-            self.return_queue.get_nowait()
+        #while not self.return_queue.empty():
+        #    self.return_queue.get_nowait()
         self.return_queue.put(curr_selected)
+
 
     def get_selected_options(self):
         to_ret = dict()
-        to_ret['start'] = self.start_next_trail
+        to_ret['start'] = self.start_next_trial
         to_ret['quit'] = self.quit
         to_ret['method'] = self.method
         to_ret['ui_device'] = self.ui_device
-        to_ret['record'] = self.record_next_trail
+        to_ret['record'] = self.record_next_trial
         return to_ret
-
 
     def color_buttons(self):
         #reset all
@@ -177,8 +185,8 @@ def configure_button_not_selected(button):
     button.configure(bg=default_bg_color, activebackground="white")
 
 
-def create_gui(get_gui_state_event, data_queue):
-    gui = GuiHandler(get_gui_state_event, data_queue)
+def create_gui(get_gui_state_event, trial_starting_event, data_queue):
+    gui = GuiHandler(get_gui_state_event, trial_starting_event, data_queue)
     import signal
     import sys
     signal.signal(signal.SIGTERM, lambda signum, stack_frame: sys.exit())
@@ -188,13 +196,22 @@ def create_gui(get_gui_state_event, data_queue):
 
 def start_gui_process():
     get_gui_state_event = multiprocessing.Event()
+    trial_starting_event = multiprocessing.Event()
     data_queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=create_gui, args=(get_gui_state_event, data_queue,))
+    p = multiprocessing.Process(target=create_gui, args=(get_gui_state_event, trial_starting_event, data_queue,))
     p.daemon = True
     p.start()
 
-    return get_gui_state_event, data_queue, p
+    return get_gui_state_event, trial_starting_event, data_queue, p
     
+
+def empty_queue(queue):
+    while not queue.empty():
+        try:
+            queue.get_nowait()
+        except Empty:
+            break
+
 
 
 
