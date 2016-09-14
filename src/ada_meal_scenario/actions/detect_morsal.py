@@ -216,7 +216,7 @@ class MorsalDetector(object):
               morsal_index += 1
         
 
-def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.01):
+def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.06):
     """ Sets all morsals to be the specified distance above the table
 
     @param table the table kinbody
