@@ -1,20 +1,33 @@
 #!/usr/bin/env python
 
-import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy
+import adapy, argparse, logging, numpy, os, sys, openravepy, prpy, rospy, random
 from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
-
+from sensor_msgs.msg import Joy
+from std_msgs.msg import String
 
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import numpy as np
 import IPython
+import time 
+
+import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
+
+from prpy.tsr.rodrigues import *
+
+from ada_meal_scenario.gui_handler import *
+
+import warnings
+warnings.simplefilter(action = "ignore", category = FutureWarning)
+
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
 def setup(sim=False, viewer=None, debug=True):
+    global robot, serving_phrases
 
     data_base_path = find_in_workspaces(
         search_dirs=['share'],
@@ -37,11 +50,32 @@ def setup(sim=False, viewer=None, debug=True):
     # Load the environment
     env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
 
+    #TODO get this from a rosparam
+    right_handed = True
+
     # Set the active manipulator on the robot
     robot.arm.SetActive()
 
+    # Now set everything to the right location in the environment
+    #if using jaco, assume we have the portable mount, and robot should have a different distance to table
+    using_jaco = robot.GetName() == 'JACO'
+    if using_jaco:
+      robot_pose = numpy.array([[1., 0., 0., 0.409],
+                              [0., 1., 0., 0.338],
+                              [0., 0., 1., 0.754],
+                              [0., 0., 0., 1.]])
+    else:
+      robot_pose = numpy.array([[1., 0., 0., 0.409],
+                              [0., 1., 0., 0.338],
+                              [0., 0., 1., 0.795],
+                              [0., 0., 0., 1.]])
+
+
+    with env:
+        robot.SetTransform(robot_pose)
+
     #if sim is True:
-    # 	startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
+    #   startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
     #    -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
     #    -1.65409614e+00,   1.30780704e+00])
     if sim is True:
@@ -49,29 +83,33 @@ def setup(sim=False, viewer=None, debug=True):
         indices, values = robot.configurations.get_configuration('ada_meal_scenario_lookingAtPlateConfiguration')
         robot.SetDOFValues(dofindices=indices, values=values)
     else:
-	robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
+        robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
     #    robot.SetDOFValues(startConfig)
-    # Now set everything to the right location in the environment
-    robot_pose = numpy.array([[1., 0., 0., 0.409],
-                              [0., 1., 0., 0.338],
-                              [0., 0., 1., 0.795],
-                              [0., 0., 0., 1.]])
-    with env:
-        robot.SetTransform(robot_pose)
-
-    iksolver = openravepy.RaveCreateIkSolver(env,"NloptIK")
-    robot.arm.SetIKSolver(iksolver)
 
     # Load the fork into the robot's hand
     tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
     env.Add(tool)
     
     # Fork in end-effector
+    #ee_in_world = robot.GetLink('j2n6a300_link_6').GetTransform()
+#    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
+#                              [ 0.,  1., 0., -0.002],
+#                              [ 0.,  0.,  -1., -0.118],
+#                              [ 0.,  0.,  0., 1.]])
+
+
     ee_in_world = robot.arm.GetEndEffectorTransform()
-    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
-                              [ 0.,  1., 0., -0.002],
-                              [ 0.,  0.,  -1., -0.118],
-                              [ 0.,  0.,  0., 1.]])
+    if right_handed:
+        y_trans_tool = 0.004
+    else:
+        y_trans_tool = -0.004
+    tool_in_ee = numpy.array([[ 1., 0.,  0., 0.],
+                            [ 0.,  1., 0., y_trans_tool],
+                            [ 0.,  0.,  1., -0.042],
+                            [ 0.,  0.,  0., 1.]])
+    rotate_tool_in_ee = rodrigues([0., 0., -np.pi/32.])
+    tool_in_ee[0:3, 0:3] = np.dot(rotate_tool_in_ee, tool_in_ee[0:3, 0:3])
+
     tool_in_world = numpy.dot(ee_in_world, tool_in_ee)
     tool.SetTransform(tool_in_world)
     
@@ -90,9 +128,36 @@ def setup(sim=False, viewer=None, debug=True):
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
     
-    robot.Grab(tool)
-    robot.Grab(fork)
-    
+    #find all finger links
+    finger_link_inds = []
+    grab_link = None
+    for ind,link in enumerate(robot.GetLinks()):
+        if 'inger' in link.GetName():
+            finger_link_inds.append(ind)
+        if 'end_effector' in link.GetName():
+            grab_link = link
+
+    robot.arm.hand.CloseHand(1.2)
+
+    robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
+    robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
+
+#    print 'grab link: ' + str(grab_link)
+#    print 'links to ignore: ' + str(finger_link_inds)
+#
+#    print 'grabbed name: ' + str(robot.GetGrabbedInfo()[0]._grabbedname)
+#    print 'ee name: ' + str(robot.GetGrabbedInfo()[0]._robotlinkname)
+#    print 'links ignored' + str(robot.GetGrabbedInfo()[0]._setRobotLinksToIgnore)
+
+
+    # Set serving phrases
+    serving_phrases = ['That looks like a delicious bite ', 
+                        'Here you go, I hope you enjoy it ',
+                        'That was a good choice ']
+
+    # add boxes for constraint to not hit user
+
+    KinovaStudyHelpers.AddConstraintBoxes(env, robot)
     return env, robot
 
 def pose_to_arrow_markers(pose, ns='axes', id_start=0, lifetime_secs=10):
@@ -147,37 +212,51 @@ def np_array_to_point(pt_np):
   pt.z = pt_np[2]
   return pt
 
+def joystick_callback(data):
+    global joystick_go_signal
+    # If the left button is pressed, update go signal flag
+    if data.buttons[0]:
+        joystick_go_signal = True
+
+#def tasks_callback(data):
+#    global serving_phrases
+#    # Announce the bite!
+#    if data.data == 'SERVING':
+#        # Randomly select one of the serving phrases
+#        phrase = random.choice(serving_phrases) + username
+#        robot.Say(phrase)
+
 
 if __name__ == "__main__":
+    global joystick_go_signal, robot, username
         
     rospy.init_node('bite_serving_scenario', anonymous=True)
 
     parser = argparse.ArgumentParser('Ada meal scenario')
     parser.add_argument("--debug", action="store_true", help="Run with debug")
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
-    parser.add_argument("--viewer", type=str, default='qtcoin', help="The viewer to load")
+    parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
+    parser.add_argument("--jaco", action="store_true", default=False, help="Using jaco robot")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
+    gui_get_event, gui_trial_starting_event, gui_queue, gui_process = start_gui_process()
 
     #slow robot down
     #save old limits
-    old_acceleration_limits = robot.GetDOFAccelerationLimits()
-    old_velocity_limits = robot.GetDOFVelocityLimits()
-
-    #slow down robot
-    #robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
-    #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
-
-    robot.SetDOFVelocityLimits(old_velocity_limits)
-    robot.SetDOFAccelerationLimits(old_acceleration_limits)
- 
-
-    #from IPython import embed
-    #embed()
+#    old_acceleration_limits = robot.GetDOFAccelerationLimits()
+#    old_velocity_limits = robot.GetDOFVelocityLimits()
+#
+#    #slow down robot
+#    #robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
+#    #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
+#
+#    robot.SetDOFVelocityLimits(old_velocity_limits)
+#    robot.SetDOFAccelerationLimits(old_acceleration_limits)
+# 
 
     #start by going to ada_meal_scenario_servingConfiguration
     if sim:
@@ -189,26 +268,44 @@ if __name__ == "__main__":
 #    camera_link = robot.GetLink('Camera_RGB_Frame')
 #    camera_transform = camera_link.GetTransform()
 #    with prpy.viz.RenderPoses([camera_transform], env):
-    while True:
-        c = raw_input('Press enter to run (q to quit)')
-        if c == 'q':
-            break
-        try:
-            manip = robot.GetActiveManipulator()
-            action = BiteServing()
-            action.execute(manip, env, detection_sim=args.detection_sim)
-        except ActionException, e:
-            logger.info('Failed to complete bite serving: %s' % str(e))
-        finally:
-            morsal = env.GetKinBody('morsal')
-            if morsal is not None:
-                logger.info('Removing morsal from environment')
-                env.Remove(morsal)
 
+    # Subscribe to the 'ada_tasks' topic (for talking during certain tasks)
+    #task_listener = rospy.Subscriber('ada_tasks', String, tasks_callback)
+
+
+    while True:
+        empty_queue(gui_queue)
+        gui_get_event.set()
+        while gui_queue.empty():
+            time.sleep(0.05)
+            continue
+
+        gui_return = gui_queue.get()
+
+        if gui_return['quit']:
+            break
+        elif gui_return['start']:
+            #tell gui we are starting to reset next trial
+            gui_trial_starting_event.set()
+            # Start bite collection and presentation
+            try:
+                manip = robot.GetActiveManipulator()
+                action = BiteServing()
+                action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], detection_sim=args.detection_sim)
+            except ActionException, e:
+                logger.info('Failed to complete bite serving: %s' % str(e))
+            finally:
+                morsal = env.GetKinBody('morsal')
+                if morsal is not None:
+                    logger.info('Removing morsal from environment')
+                    env.Remove(morsal)
 
     #restore old limits
-    robot.SetDOFVelocityLimits(old_velocity_limits)
-    robot.SetDOFAccelerationLimits(old_acceleration_limits)
+    #robot.SetDOFVelocityLimits(old_velocity_limits)
+    #robot.SetDOFAccelerationLimits(old_acceleration_limits)
+    
+#    import IPython
+#    IPython.embed()
 
-    import IPython
-    IPython.embed()
+    gui_process.terminate()
+

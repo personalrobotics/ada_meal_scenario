@@ -6,6 +6,8 @@ from runBiteServing import setup
 from prpy.planning import PlanningError
 from IPython import embed
 
+import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
+
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
@@ -29,6 +31,8 @@ if __name__ == "__main__":
     sim = not args.real
     env, robot = setup(sim=sim, viewer=args.viewer, debug=args.debug)
 
+    using_jaco = robot.GetName() == 'JACO'
+
     from rospkg import RosPack
     rospack = RosPack()
     package_path = rospack.get_path(project_name)
@@ -41,10 +45,11 @@ if __name__ == "__main__":
     #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
 
     try:
-        indices, values = robot.configurations.get_configuration('home')
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')
         robot.SetDOFValues(dofindices=indices, values=values)
 
-        path_to_morselstabbed_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_morselStabbedConfiguration', execute=True)
+        #path_to_morselstabbed_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_morselStabbedConfiguration', execute=True)
+
         #res = openravepy.planningutils.SmoothTrajectory(path_to_morselstabbed_configuration,1, 1, 'ParabolicSmoother', '')
         #robot.ExecuteTrajectory(path_to_morselstabbed_configuration)
         #path_to_looking_at_face = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtFaceConfiguration', execute=False)    
@@ -53,14 +58,14 @@ if __name__ == "__main__":
         #robot.ExecutePath(path_to_morselstabbed_configuration)
 
         path_to_serving_configuration = robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
-        trajfile = os.path.join(package_path, 'data', 'trajectories', 'traj_serving.xml')
+        trajfile = os.path.join(package_path, 'data', 'trajectories', robot.GetName() + '_traj_serving.xml')
         #res = openravepy.planningutils.SmoothTrajectory(path_to_serving_configuration,1, 1, 'ParabolicSmoother', '')
         save_path(path_to_serving_configuration, trajfile)
         #robot.ExecutePath(path_to_serving_configuration)
         #robot.ExecuteTrajectory(path_to_serving_configuration)
 
         path_to_looking_at_plate = robot.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration', execute=True)
-        trajfile = os.path.join(package_path, 'data', 'trajectories', 'traj_lookingAtPlate.xml')
+        trajfile = os.path.join(package_path, 'data', 'trajectories', robot.GetName() + '_traj_lookingAtPlate.xml')
         #res = openravepy.planningutils.SmoothTrajectory(path_to_looking_at_plate,1, 1, 'ParabolicSmoother', '')
         save_path(path_to_looking_at_plate, trajfile)
         #robot.ExecutePath(path_to_looking_at_plate)
