@@ -34,7 +34,7 @@ class GetMorsal(BypassableAction):
         BypassableAction.__init__(self, 'EXECUTING_TRAJECTORY', bypass=bypass)
         
         
-    def _run(self, manip, method, ui_device):
+    def _run(self, manip, method, ui_device, record_trial=False):
         """
         Execute a sequence of plans that pick up the morsal
         @param manip The manipulator
@@ -93,10 +93,10 @@ class GetMorsal(BypassableAction):
           else:
             fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command)
+          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command, record_trial=record_trial)
         elif method == 'blend': #TODO add blend
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True)
+          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True, record_trial=record_trial)
         elif method == 'direct':
           direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
           direct_teleop_action.execute(manip, ui_device)

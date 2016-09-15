@@ -16,7 +16,7 @@ class BiteServing(BypassableAction):
     def __init__(self, bypass = False):
         BypassableAction.__init__(self, 'BiteServing', bypass=bypass)
 
-    def execute(self, manip, env, method, ui_device, detection_sim=False):
+    def execute(self, manip, env, method, ui_device, detection_sim=False, record_trial=False):
         
         # TODO: Does this need to be publishing regularly
         state_pub = rospy.Publisher('ada_tasks',String, queue_size=10)
@@ -30,7 +30,7 @@ class BiteServing(BypassableAction):
         #if direct teleop, skip sequence
         if method == 'direct':
           direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
-          direct_teleop_action.execute(manip, ui_device)
+          direct_teleop_action.execute(manip, ui_device, record_trial=record_trial)
 
           #make sure we end at serving
           manip.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
@@ -51,7 +51,7 @@ class BiteServing(BypassableAction):
           # Move to get object
           action = GetMorsal(bypass = self.bypass)
           state_pub.publish(action.name)
-          action.execute(manip, method, ui_device)
+          action.execute(manip, method, ui_device, record_trial=record_trial)
 
     
           # Serve the morsal
