@@ -6,6 +6,7 @@ from get_morsal import GetMorsal
 from std_msgs.msg import String
 import time
 
+
 import logging
 logger = logging.getLogger('ada_meal_scenario')
 

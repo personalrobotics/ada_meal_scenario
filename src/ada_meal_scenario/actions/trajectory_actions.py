@@ -51,8 +51,8 @@ class RunTrajectory(BypassableAction):
             try:
                 #from IPython import embed
                 #embed()
-                with prpy.rave.Disabled(fork):
-                   robot.PlanToConfiguration(first_config, execute=True)
+                #with prpy.rave.Disabled(fork):
+                robot.PlanToConfiguration(first_config, execute=True)
             except PlanningError, e:
                 raise ActionException(self, 'Failed to plan to start of trajectory: %s' % str(e))
 

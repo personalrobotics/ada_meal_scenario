@@ -27,7 +27,8 @@ class AssistancePolicyAction(BypassableAction):
         env = robot.GetEnv()
 
         if record_trial:
-          traj_data_recording = TrajectoryData()
+          file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
+          traj_data_recording = TrajectoryData(file_directory=file_directory)
         else:
           traj_data_recording = None
 
