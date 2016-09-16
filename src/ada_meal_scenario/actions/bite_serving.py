@@ -7,6 +7,8 @@ from std_msgs.msg import String
 import time
 
 
+from ada_teleoperation.DataRecordingUtils import *
+
 import logging
 logger = logging.getLogger('ada_meal_scenario')
 
@@ -26,6 +28,13 @@ class BiteServing(BypassableAction):
         #action = LookAtFace(bypass = self.bypass)
         #state_pub.publish(action.name)
         #action.execute(manip)
+
+        if record_trial:
+          file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
+          rosbag_topic_names = ['/hydra_calib', '/ada/joy']
+          rosbag_process = start_rosbag(rosbag_topic_names, file_directory=file_directory)
+
+
 
 
         #if direct teleop, skip sequence
@@ -59,3 +68,6 @@ class BiteServing(BypassableAction):
           action = Serve(bypass = self.bypass)
           state_pub.publish(action.name)
           action.execute(manip)
+
+        if record_trial:
+          stop_rosbag(rosbag_process)
