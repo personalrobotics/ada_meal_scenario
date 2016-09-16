@@ -262,10 +262,10 @@ def GetAllDistsTableToObjects(table, objects):
     table_aabb = table.ComputeAABB()
     top_of_table = table_aabb.pos()[2] + table_aabb.extents()[2]
     dists = []
-    for object in objects:
-        object_aabb = object.ComputeAABB()
+    for obj in objects:
+        object_aabb = obj.ComputeAABB()
         bottom_of_object = object_aabb.pos()[2] - object_aabb.extents()[2]
-        dist_diff = bottom_of_object - top_of_table
+        dist_diff = (bottom_of_object - top_of_table)
         dists.append(dist_diff)
     return dists
 
