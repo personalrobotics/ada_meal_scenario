@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import adapy, argparse, logging, numpy, os, sys, openravepy, prpy, rospy, random
+from prpy.planning.base import PlanningError
 from catkin.find_in_workspaces import find_in_workspaces
 from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
@@ -82,10 +83,10 @@ def setup(sim=False, viewer=None, debug=True):
     #    -1.65409614e+00,   1.30780704e+00])
     if sim is True:
         #set configuration to look at plate if sim else plan to look at plate
-        indices, values = robot.configurations.get_configuration('ada_meal_scenario_lookingAtPlateConfiguration')
+        indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
         robot.SetDOFValues(dofindices=indices, values=values)
     else:
-        robot.arm.PlanToNamedConfiguration('ada_meal_scenario_lookingAtPlateConfiguration')
+        robot.arm.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration')
     #    robot.SetDOFValues(startConfig)
 
     # Load the fork into the robot's hand
@@ -228,6 +229,24 @@ def joystick_callback(data):
 #        phrase = random.choice(serving_phrases) + username
 #        robot.Say(phrase)
 
+def ResetTrial(robot):
+  if robot.simulated:
+      indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
+      robot.SetDOFValues(dofindices=indices, values=values)
+  else:
+    #first try to plan to serving
+    try:
+      robot.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration', execute=True)
+    except PlanningError, e:
+      #if it doesn't work, unload controllers
+      from controller_manager.controller_manager_interface import SwitchController
+      switch_controller_service = rospy.ServiceProxy('controller_manager/switch_controller', SwitchController)
+      switch_controller_service([], ['traj_controller', 'velocity_joint_mode_controller'], 0)
+
+
+
+
+
 
 if __name__ == "__main__":
     global joystick_go_signal, robot, username
@@ -314,21 +333,15 @@ if __name__ == "__main__":
                 action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], state_pub=state_pub, detection_sim=args.detection_sim, record_trial=gui_return['record'], file_directory=file_directory_user)
             except ActionException, e:
                 logger.info('Failed to complete bite serving: %s' % str(e))
+
+                ResetTrial(robot)
+
             finally:
-                morsal = env.GetKinBody('morsal')
-                if morsal is not None:
-                    logger.info('Removing morsal from environment')
-                    env.Remove(morsal)
                 if gaze_recording_on:
                     pupil_capture.stop()
                     gaze_recording_on = False
 
-    #restore old limits
-    #robot.SetDOFVelocityLimits(old_velocity_limits)
-    #robot.SetDOFAccelerationLimits(old_acceleration_limits)
-    
-#    import IPython
-#    IPython.embed()
+
 
     gui_process.terminate()
 
