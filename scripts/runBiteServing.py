@@ -19,6 +19,8 @@ from prpy.tsr.rodrigues import *
 
 from ada_meal_scenario.gui_handler import *
 
+from gazetracking.pupil_capture import PupilCapture
+
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
 
@@ -272,6 +274,10 @@ if __name__ == "__main__":
     # Subscribe to the 'ada_tasks' topic (for talking during certain tasks)
     #task_listener = rospy.Subscriber('ada_tasks', String, tasks_callback)
 
+    # Start eyetracker remote controller
+    pupil_capture = PupilCapture()
+    pupil_capture.setup(logger)
+    gaze_recording_on = False # flag for when gaze tracker is recording
 
     while True:
         empty_queue(gui_queue)
@@ -285,6 +291,10 @@ if __name__ == "__main__":
         if gui_return['quit']:
             break
         elif gui_return['start']:
+            if gui_return['record']:
+                # Start eyetracker recording
+                pupil_capture.start()
+                gaze_recording_on = True
             #tell gui we are starting to reset next trial
             gui_trial_starting_event.set()
             # Start bite collection and presentation
@@ -299,6 +309,9 @@ if __name__ == "__main__":
                 if morsal is not None:
                     logger.info('Removing morsal from environment')
                     env.Remove(morsal)
+                if gaze_recording_on:
+                    pupil_capture.stop()
+                    gaze_recording_on = False
 
     #restore old limits
     #robot.SetDOFVelocityLimits(old_velocity_limits)
