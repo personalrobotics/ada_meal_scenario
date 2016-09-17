@@ -34,7 +34,7 @@ class GetMorsal(BypassableAction):
         BypassableAction.__init__(self, 'GetMorsal', bypass=bypass)
         
         
-    def _run(self, manip, method, ui_device, filename_trajdata=None):
+    def _run(self, manip, method, ui_device, state_pub=None, filename_trajdata=None):
         """
         Execute a sequence of plans that pick up the morsal
         @param manip The manipulator
@@ -46,7 +46,6 @@ class GetMorsal(BypassableAction):
         #morsal = all_morsals[0]
         if all_morsals is None:
             raise ActionException(self, 'Failed to find morsal in environment.')
-  
 
         fork = env.GetKinBody('fork')
         #if True: #fork is None:
@@ -86,6 +85,11 @@ class GetMorsal(BypassableAction):
         #TODO add plan to some start pose?
 
       
+  
+        if state_pub:
+          state_pub.publish("getting morsal with method " + str(method))
+          if filename_trajdata and 'direct' not in method:
+            state_pub.publish("recording data to " + str(filename_trajdata))
 
         if 'shared_auton' in method:
           if method == 'shared_auton_prop':
