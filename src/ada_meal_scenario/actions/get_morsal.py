@@ -65,7 +65,7 @@ class GetMorsal(BypassableAction):
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
         xoffset = 0.00
         yoffset = 0.00
-        zoffset = -0.07
+        zoffset = -0.06
         for pose in all_desired_ee_pose:
             pose[0,3] += xoffset
             pose[1,3] += yoffset
@@ -94,12 +94,12 @@ class GetMorsal(BypassableAction):
             fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
           assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command, filename_trajdata=filename_trajdata)
-        elif method == 'blend': #TODO add blend
+        elif method == 'blend':
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
           assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True, filename_trajdata=filename_trajdata)
         elif method == 'direct':
           direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
-          direct_teleop_action.execute(manip, ui_device)
+          direct_teleop_action.execute(manip, ui_device, filename_trajdata=filename_trajdata)
         elif method == 'autonomous':
           desired_ee_pose = all_desired_ee_pose[0]
           try:
