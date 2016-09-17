@@ -34,7 +34,7 @@ class GetMorsal(BypassableAction):
         BypassableAction.__init__(self, 'GetMorsal', bypass=bypass)
         
         
-    def _run(self, manip, method, ui_device, filename_trajdata=None):
+    def _run(self, manip, method, ui_device, state_pub=None, filename_trajdata=None):
         """
         Execute a sequence of plans that pick up the morsal
         @param manip The manipulator
@@ -46,7 +46,6 @@ class GetMorsal(BypassableAction):
         #morsal = all_morsals[0]
         if all_morsals is None:
             raise ActionException(self, 'Failed to find morsal in environment.')
-  
 
         fork = env.GetKinBody('fork')
         #if True: #fork is None:
@@ -65,7 +64,7 @@ class GetMorsal(BypassableAction):
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
         xoffset = 0.00
         yoffset = 0.00
-        zoffset = -0.07
+        zoffset = -0.06
         for pose in all_desired_ee_pose:
             pose[0,3] += xoffset
             pose[1,3] += yoffset
@@ -86,6 +85,11 @@ class GetMorsal(BypassableAction):
         #TODO add plan to some start pose?
 
       
+  
+        if state_pub:
+          state_pub.publish("getting morsal with method " + str(method))
+          if filename_trajdata and 'direct' not in method:
+            state_pub.publish("recording data to " + str(filename_trajdata))
 
         if 'shared_auton' in method:
           if method == 'shared_auton_prop':
@@ -94,12 +98,12 @@ class GetMorsal(BypassableAction):
             fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
           assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command, filename_trajdata=filename_trajdata)
-        elif method == 'blend': #TODO add blend
+        elif method == 'blend':
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
           assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True, filename_trajdata=filename_trajdata)
         elif method == 'direct':
           direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
-          direct_teleop_action.execute(manip, ui_device)
+          direct_teleop_action.execute(manip, ui_device, filename_trajdata=filename_trajdata)
         elif method == 'autonomous':
           desired_ee_pose = all_desired_ee_pose[0]
           try:
@@ -116,14 +120,7 @@ class GetMorsal(BypassableAction):
               raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
 
 
-
-        #time.sleep(4)
         # Now stab the morsal
-        
-        #restore velocity limits
-#        robot.SetDOFVelocityLimits(old_velocity_limits)
-#        robot.SetDOFAccelerationLimits(old_acceleration_limits)
-
         try:
             direction = numpy.array([0., 0., -1.])
             
@@ -157,8 +154,6 @@ class GetMorsal(BypassableAction):
 
 
 def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
-    #TODO add checking of IKs before adding pose
-
     #fork top facing towards user
     desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
                                             [ 0.,  1., 0., 0.],
@@ -173,7 +168,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     
     xoffset = 0.0
     yoffset = 0.0#-0.005
-    zoffset = 0.08
+    zoffset = 0.06
 
     desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
     desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset

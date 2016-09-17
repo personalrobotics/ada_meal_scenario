@@ -231,6 +231,8 @@ def joystick_callback(data):
 
 if __name__ == "__main__":
     global joystick_go_signal, robot, username
+
+    state_pub = rospy.Publisher('ada_tasks',String, queue_size=10)
         
     rospy.init_node('bite_serving_scenario', anonymous=True)
 
@@ -274,10 +276,14 @@ if __name__ == "__main__":
     # Subscribe to the 'ada_tasks' topic (for talking during certain tasks)
     #task_listener = rospy.Subscriber('ada_tasks', String, tasks_callback)
 
+
     # Start eyetracker remote controller
     pupil_capture = PupilCapture()
     pupil_capture.setup(logger)
     gaze_recording_on = False # flag for when gaze tracker is recording
+
+    # Where to store rosbags
+    file_directory_user = None
 
     while True:
         empty_queue(gui_queue)
@@ -301,7 +307,11 @@ if __name__ == "__main__":
             try:
                 manip = robot.GetActiveManipulator()
                 action = BiteServing()
-                action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], detection_sim=args.detection_sim, record_trial=gui_return['record'])
+                if gui_return['record'] and file_directory_user is None:
+                  from ada_teleoperation.DataRecordingUtils import *
+                  file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
+                  user_number, file_directory_user = get_next_available_user_ind(file_directory=file_directory, user_folder_base=user_folder_base_default)
+                action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], state_pub=state_pub, detection_sim=args.detection_sim, record_trial=gui_return['record'], file_directory=file_directory_user)
             except ActionException, e:
                 logger.info('Failed to complete bite serving: %s' % str(e))
             finally:
