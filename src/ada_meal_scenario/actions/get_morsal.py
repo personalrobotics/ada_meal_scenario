@@ -116,14 +116,7 @@ class GetMorsal(BypassableAction):
               raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
 
 
-
-        #time.sleep(4)
         # Now stab the morsal
-        
-        #restore velocity limits
-#        robot.SetDOFVelocityLimits(old_velocity_limits)
-#        robot.SetDOFAccelerationLimits(old_acceleration_limits)
-
         try:
             direction = numpy.array([0., 0., -1.])
             
@@ -157,8 +150,6 @@ class GetMorsal(BypassableAction):
 
 
 def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
-    #TODO add checking of IKs before adding pose
-
     #fork top facing towards user
     desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
                                             [ 0.,  1., 0., 0.],
@@ -173,7 +164,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     
     xoffset = 0.0
     yoffset = 0.0#-0.005
-    zoffset = 0.08
+    zoffset = 0.06
 
     desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
     desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
