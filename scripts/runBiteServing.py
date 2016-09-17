@@ -261,6 +261,7 @@ if __name__ == "__main__":
     parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
     parser.add_argument("--jaco", action="store_true", default=False, help="Using jaco robot")
+    parser.add_argument("--userid", type=int, help="User ID number")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
@@ -301,8 +302,24 @@ if __name__ == "__main__":
     pupil_capture.setup(logger)
     gaze_recording_on = False # flag for when gaze tracker is recording
 
-    # Where to store rosbags
+    # Where to store rosbags and other user data - set this manually if userid was provided,
+    # otherwise dynamically generate it
+    from ada_teleoperation.DataRecordingUtils import *
     file_directory_user = None
+    file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
+    if args.userid:
+        user_number = "%03d"%args.userid
+        base_user_filename = "user_" + user_number
+        file_directory_user = os.path.join(file_directory, base_user_filename)
+        # Check whether the file_directory_user exists
+        if os.path.exists(file_directory_user):
+            inp = raw_input("Filename " + file_directory_user + " exists. Press q to quit or enter to continue")
+            if inp == 'q':
+                raise OSError("Filename already exists. Quitting.")
+        else:
+            os.makedirs(file_directory_user)
+    else:
+        user_number, file_directory_user = get_next_available_user_ind(file_directory=file_directory, user_folder_base=user_folder_base_default)
 
     while True:
         empty_queue(gui_queue)
@@ -326,10 +343,6 @@ if __name__ == "__main__":
             try:
                 manip = robot.GetActiveManipulator()
                 action = BiteServing()
-                if gui_return['record'] and file_directory_user is None:
-                  from ada_teleoperation.DataRecordingUtils import *
-                  file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
-                  user_number, file_directory_user = get_next_available_user_ind(file_directory=file_directory, user_folder_base=user_folder_base_default)
                 action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], state_pub=state_pub, detection_sim=args.detection_sim, record_trial=gui_return['record'], file_directory=file_directory_user)
             except ActionException, e:
                 logger.info('Failed to complete bite serving: %s' % str(e))
