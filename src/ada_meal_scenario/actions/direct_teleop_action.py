@@ -13,13 +13,12 @@ class DirectTeleopAction(BypassableAction):
     def __init__(self, bypass=False):
         BypassableAction.__init__(self, 'DIRECT_TELEOP', bypass=bypass)
         
-    def _run(self, manip, ui_device, record_trial=False):
+    def _run(self, manip, ui_device, filename_trajdata=None):
         robot = manip.GetRobot()
         env = robot.GetEnv()
 
-        if record_trial:
-          file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
-          traj_data_recording = TrajectoryData(file_directory=file_directory)
+        if filename_trajdata:
+          traj_data_recording = TrajectoryData(filename_trajdata)
         else:
           traj_data_recording = None
 
