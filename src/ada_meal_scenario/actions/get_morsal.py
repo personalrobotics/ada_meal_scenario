@@ -62,12 +62,7 @@ class GetMorsal(BypassableAction):
             
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
-        xoffset = 0.00
-        yoffset = 0.00
         zoffset = -0.06
-        for pose in all_desired_ee_pose:
-            pose[0,3] += xoffset
-            pose[1,3] += yoffset
         for pose in all_desired_stab_ee_pose:
             pose[2,3] += zoffset
         #import openravepy
@@ -137,6 +132,11 @@ class GetMorsal(BypassableAction):
                     T = robot.arm.GetEndEffectorTransform()
                     path = robot.arm.PlanToEndEffectorOffset(direction=direction,
                                                  distance=distance,
+                                                 execute=True)  #TODO: add some tolerance
+
+                    #plan back up
+                    path = robot.arm.PlanToEndEffectorOffset(direction=-direction,
+                                                 distance=0.07,
                                                  execute=True)  #TODO: add some tolerance
 
 

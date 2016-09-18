@@ -20,7 +20,7 @@ from prpy.tsr.rodrigues import *
 
 from ada_meal_scenario.gui_handler import *
 
-from gazetracking.pupil_capture import PupilCapture
+#from gazetracking.pupil_capture import PupilCapture
 
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
@@ -296,9 +296,13 @@ if __name__ == "__main__":
 
 
     # Start eyetracker remote controller
-    pupil_capture = PupilCapture()
-    pupil_capture.setup(logger)
-    gaze_recording_on = False # flag for when gaze tracker is recording
+    do_pupil_tracking=False
+    if do_pupil_tracking:
+        pupil_capture = PupilCapture()
+        pupil_capture.setup(logger)
+    else:
+        pupil_capture = None
+        gaze_recording_on = False # flag for when gaze tracker is recording
 
     # Where to store rosbags and other user data - set this manually if userid was provided,
     # otherwise dynamically generate it
@@ -333,7 +337,8 @@ if __name__ == "__main__":
         elif gui_return['start']:
             if gui_return['record']:
                 # Start eyetracker recording
-                pupil_capture.start()
+                if pupil_capture:
+                    pupil_capture.start()
                 gaze_recording_on = True
             #tell gui we are starting to reset next trial
             gui_trial_starting_event.set()
