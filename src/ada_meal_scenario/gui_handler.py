@@ -66,7 +66,7 @@ class GuiHandler(object):
         #self.all_buttons[arg] = b
 
         self.method='autonomous'
-        self.ui_device='mouse'
+        self.ui_device='kinova'
         self.color_buttons()
 
     def mainloop(self):

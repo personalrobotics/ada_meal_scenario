@@ -167,7 +167,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #yoffset = 0.06
     
     xoffset = 0.0
-    yoffset = 0.0#-0.005
+    yoffset = -0.03 #-0.005
     zoffset = 0.06
 
     desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset

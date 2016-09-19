@@ -34,11 +34,14 @@ class DetectMorsal(BypassableAction):
             time.sleep(1.0)
 
         #filter bad detections
+        logger.info('Getting morsals in env')
         all_morsals = GetAllMorsalsInEnv(env)
         #inds_to_filter = FilterMorsalsOnTable(env.GetKinBody('table'), all_morsals)
         #self.filter_morsal_inds(env, inds_to_filter, all_morsals)
+        logger.info('projecting morsal on table')
         ProjectMorsalsOnTable(env.GetKinBody('table'), all_morsals)
 
+        logger.info('stopping detector')
         m_detector.stop()
 
         if not env.GetKinBody(morsal_index_to_name(0)):
@@ -128,11 +131,11 @@ class MorsalDetector(object):
         self.morsal_pos_hypotheses = []
         self.morsal_pos_hypotheses_counts = []
         #require this many consecutive detections to add morsals
-        self.min_counts_required_addmorsals = 4
+        self.min_counts_required_addmorsals = 5
         #once that threshhold is reached for any morsal, require this many counts per morsal to add
         self.min_counts_required = 3
         #if less then this treshhold distance, count as consecutive
-        self.distance_thresh_count = 0.015
+        self.distance_thresh_count = 0.02
 
     def start(self):
         logger.info('Subscribing to morsal detection')
@@ -174,9 +177,8 @@ class MorsalDetector(object):
 
 
         
-    # TODO update this for multiple morsals
     def _callback(self, msg):
-        logger.debug('Received detection')
+        logger.info('Received detection')
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
         morsal_positions = numpy.asarray(pts_arr)
@@ -207,6 +209,7 @@ class MorsalDetector(object):
 
         #if any detection exceeds min count, add all detections with that count
         if max(self.morsal_pos_hypotheses_counts) >= self.min_counts_required_addmorsals:
+          logger.info('adding all the morsals')
           morsal_index = 0
           for hypoth_pos, hypoth_pos_count in zip(self.morsal_pos_hypotheses, self.morsal_pos_hypotheses_counts):
             if hypoth_pos_count >= self.min_counts_required:

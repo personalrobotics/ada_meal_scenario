@@ -20,7 +20,7 @@ from prpy.tsr.rodrigues import *
 
 from ada_meal_scenario.gui_handler import *
 
-#from gazetracking.pupil_capture import PupilCapture
+from gazetracking.pupil_capture import PupilCapture
 
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
@@ -260,6 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
     parser.add_argument("--jaco", action="store_true", default=False, help="Using jaco robot")
     parser.add_argument("--userid", type=int, help="User ID number")
+    parser.add_argument("--no-pupil-tracking", action="store_true", help="Disable pupil tracking")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
@@ -296,13 +297,12 @@ if __name__ == "__main__":
 
 
     # Start eyetracker remote controller
-    do_pupil_tracking=False
+    do_pupil_tracking= not args.no_pupil_tracking
     if do_pupil_tracking:
         pupil_capture = PupilCapture()
         pupil_capture.setup(logger)
     else:
         pupil_capture = None
-        gaze_recording_on = False # flag for when gaze tracker is recording
 
     # Where to store rosbags and other user data - set this manually if userid was provided,
     # otherwise dynamically generate it
@@ -339,7 +339,6 @@ if __name__ == "__main__":
                 # Start eyetracker recording
                 if pupil_capture:
                     pupil_capture.start()
-                gaze_recording_on = True
             #tell gui we are starting to reset next trial
             gui_trial_starting_event.set()
             # Start bite collection and presentation
@@ -353,9 +352,8 @@ if __name__ == "__main__":
                 ResetTrial(robot)
 
             finally:
-                if gaze_recording_on:
+                if pupil_capture:
                     pupil_capture.stop()
-                    gaze_recording_on = False
 
 
 
