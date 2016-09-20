@@ -130,6 +130,10 @@ def setup(sim=False, viewer=None, debug=True):
     fork_in_ee = numpy.dot(tool_in_ee, fork_in_tool)
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
+
+    fork_box = make_collision_box_body(fork, add_to_pos=np.array([0.0, 0.0, 0.05]), add_to_extents=np.array([0.02, 0.02, 0.1]))
+    tool_box = make_collision_box_body(tool, add_to_pos=np.array([0.0, 0.0, 0.04]), add_to_extents=np.array([0.055, 0.055, 0.055]))
+
     
     #find all finger links
     finger_link_inds = []
@@ -144,6 +148,8 @@ def setup(sim=False, viewer=None, debug=True):
 
     robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
+    robot.Grab(tool_box, grablink=grab_link, linkstoignore=finger_link_inds)
+    robot.Grab(fork_box, grablink=grab_link, linkstoignore=finger_link_inds)
 
 #    print 'grab link: ' + str(grab_link)
 #    print 'links to ignore: ' + str(finger_link_inds)
@@ -162,6 +168,44 @@ def setup(sim=False, viewer=None, debug=True):
 
     KinovaStudyHelpers.AddConstraintBoxes(env, robot)
     return env, robot
+
+
+def make_collision_box_body(kinbody, add_to_pos=np.array([0.0, 0.0, 0.0]), add_to_extents = np.array([0.0, 0.0, 0.0])):
+  """Creates a box at position of kin body with optionally modified values
+  @param kinbody body we want to create a box around
+  @param env openrave environment
+  @param add_to_pos modifications to the position of the axis aligned bounding box
+  @param add_to_extents modifications to the extents of the axis aligned bounding box
+  @return kinbody of box object
+  """
+  env = kinbody.GetEnv()
+
+  with env:
+    old_transform_body = kinbody.GetTransform()
+    kinbody.SetTransform(np.eye(4))
+
+    
+    kinbody_aabb = kinbody.ComputeAABB()
+    box_aabb_arr = np.append(kinbody_aabb.pos()+add_to_pos, kinbody_aabb.extents()+add_to_extents)
+    box_aabb_arr = box_aabb_arr.reshape(1,6)
+    print 'aabb box: ' + str(box_aabb_arr)
+
+    box_body = openravepy.RaveCreateKinBody(env, '')
+    box_body.SetName(kinbody.GetName() + '_box')
+    box_body.InitFromBoxes(box_aabb_arr, False)
+
+    env.Add(box_body)
+
+    kinbody.SetTransform(old_transform_body)
+    box_body.SetTransform(old_transform_body)
+    
+    box_body.Enable(True)
+
+  return box_body
+  
+
+
+
 
 def pose_to_arrow_markers(pose, ns='axes', id_start=0, lifetime_secs=10):
   markers = []

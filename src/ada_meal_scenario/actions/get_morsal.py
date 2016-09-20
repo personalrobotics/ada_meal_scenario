@@ -183,6 +183,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #check to make sure ik solutions exist
     robot = manip.GetRobot()
     with robot:
+        print 'looking for ik for morsal ' + str(morsal.GetName())
         ik_filter_options = openravepy.IkFilterOptions.CheckEnvCollisions
         #first call FindIKSolution which is faster if it succeeds
         ik_sol = manip.FindIKSolution(desired_ee_pose, ik_filter_options)
