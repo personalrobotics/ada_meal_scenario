@@ -81,6 +81,7 @@ def setup(sim=False, viewer=None, debug=True):
     #   startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
     #    -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
     #    -1.65409614e+00,   1.30780704e+00])
+    logger.info('Setting Initial Robot Configuration to Serving')
     if sim is True:
         #set configuration to look at plate if sim else plan to look at plate
         indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
@@ -89,6 +90,7 @@ def setup(sim=False, viewer=None, debug=True):
         robot.arm.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration')
     #    robot.SetDOFValues(startConfig)
 
+    logger.info('Initial Config Set')
     # Load the fork into the robot's hand
     tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
     env.Add(tool)
@@ -110,7 +112,9 @@ def setup(sim=False, viewer=None, debug=True):
                             [ 0.,  1., 0., y_trans_tool],
                             [ 0.,  0.,  1., -0.042],
                             [ 0.,  0.,  0., 1.]])
-    rotate_tool_in_ee = rodrigues([0., 0., -np.pi/32.])
+    rotate_tool_in_ee = rodrigues([0., 0., 0.])
+    rotate_tool_in_ee = rodrigues([0., 0., np.pi/32.])
+    #rotate_tool_in_ee = rodrigues([0., 0., -np.pi/32.])
     tool_in_ee[0:3, 0:3] = np.dot(rotate_tool_in_ee, tool_in_ee[0:3, 0:3])
 
     tool_in_world = numpy.dot(ee_in_world, tool_in_ee)
@@ -131,8 +135,12 @@ def setup(sim=False, viewer=None, debug=True):
     fork_in_world = numpy.dot(ee_in_world, fork_in_ee)
     fork.SetTransform(fork_in_world)
 
+    logger.info('creating fork and tool boxes')
+
     fork_box = make_collision_box_body(fork, add_to_pos=np.array([0.0, 0.0, 0.05]), add_to_extents=np.array([0.02, 0.02, 0.1]))
     tool_box = make_collision_box_body(tool, add_to_pos=np.array([0.0, 0.0, 0.04]), add_to_extents=np.array([0.055, 0.055, 0.055]))
+
+    logger.info('fork and tool boxes created')
 
     
     #find all finger links
@@ -146,6 +154,7 @@ def setup(sim=False, viewer=None, debug=True):
 
     robot.arm.hand.CloseHand(1.2)
 
+    logger.info('Grabbing tool and fork')
     robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(tool_box, grablink=grab_link, linkstoignore=finger_link_inds)
@@ -165,7 +174,6 @@ def setup(sim=False, viewer=None, debug=True):
                         'That was a good choice ']
 
     # add boxes for constraint to not hit user
-
     KinovaStudyHelpers.AddConstraintBoxes(env, robot)
     return env, robot
 
@@ -188,7 +196,7 @@ def make_collision_box_body(kinbody, add_to_pos=np.array([0.0, 0.0, 0.0]), add_t
     kinbody_aabb = kinbody.ComputeAABB()
     box_aabb_arr = np.append(kinbody_aabb.pos()+add_to_pos, kinbody_aabb.extents()+add_to_extents)
     box_aabb_arr = box_aabb_arr.reshape(1,6)
-    print 'aabb box: ' + str(box_aabb_arr)
+    #print 'aabb box: ' + str(box_aabb_arr)
 
     box_body = openravepy.RaveCreateKinBody(env, '')
     box_body.SetName(kinbody.GetName() + '_box')
@@ -343,11 +351,13 @@ if __name__ == "__main__":
     # Start eyetracker remote controller
     do_pupil_tracking= not args.no_pupil_tracking
     if do_pupil_tracking:
+        logger.info('setting up pupil tracking')
         pupil_capture = PupilCapture()
         pupil_capture.setup(logger)
     else:
         pupil_capture = None
 
+    logger.info('pupil tracker set, or none needed')
     # Where to store rosbags and other user data - set this manually if userid was provided,
     # otherwise dynamically generate it
     from ada_teleoperation.DataRecordingUtils import *

@@ -30,7 +30,7 @@ class DetectMorsal(BypassableAction):
         start_time = time.time()
         time.sleep(1.0) # give time for the camera image to stabilize
         while not env.GetKinBody(morsal_index_to_name(0)) and (timeout is None or time.time() - start_time < timeout):
-            print 'still waiting'
+            logger.info('Waiting for detections')
             time.sleep(1.0)
 
         #filter bad detections
@@ -166,10 +166,11 @@ class MorsalDetector(object):
             first_match_only=True)[0]
         ball_path = os.path.join(object_base_path, 'objects', 'smallsphere.kinbody.xml')
         if self.env.GetKinBody(morsal_name) is None:
-            morsal = self.env.ReadKinBodyURI(ball_path)
-            morsal.SetName(morsal_name)
-            self.env.Add(morsal)
-            morsal.Enable(False)
+            with self.env:
+                morsal = self.env.ReadKinBodyURI(ball_path)
+                morsal.SetName(morsal_name)
+                self.env.Add(morsal)
+                morsal.Enable(False)
         else:
             morsal = self.env.GetKinBody(morsal_name)
         morsal.SetTransform(morsal_in_world)
@@ -212,14 +213,16 @@ class MorsalDetector(object):
           logger.info('adding all the morsals')
           morsal_index = 0
           for hypoth_pos, hypoth_pos_count in zip(self.morsal_pos_hypotheses, self.morsal_pos_hypotheses_counts):
+            logger.info('checking morsal at pos ' + str(hypoth_pos))
             if hypoth_pos_count >= self.min_counts_required:
+              logger.info('adding morsal at pos ' + str(hypoth_pos))
               morsal_in_camera = numpy.eye(4)
               morsal_in_camera[:3,3] = hypoth_pos
               self.add_morsal(morsal_in_camera, morsal_index_to_name(morsal_index))
               morsal_index += 1
         
 
-def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.025):
+def ProjectMorsalsOnTable(table, morsals, dist_above_table=0.03):
     """ Sets all morsals to be the specified distance above the table
 
     @param table the table kinbody

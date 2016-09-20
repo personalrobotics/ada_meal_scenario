@@ -12,8 +12,8 @@ from direct_teleop_action import DirectTeleopAction
 from detect_morsal import morsal_index_to_name
 
 
-#get_morsal_modes = ['direct', 'blend', 'shared_auton_1', 'shared_auton_2', 'auton']
-
+import logging
+logger = logging.getLogger('ada_meal_scenario')
 
 def get_all_morsal_bodies(env):
   all_bodies = []
@@ -123,7 +123,7 @@ class GetMorsal(BypassableAction):
             desired_height = numpy.mean([pose[2,3] for pose in all_desired_stab_ee_pose])
             curr_height = manip.GetEndEffectorTransform()[2,3]
 
-            distance = curr_height - desired_height
+            distance = max(curr_height - desired_height, 0.0)
             print 'distance moving down: ' + str(distance)
 
             with prpy.viz.RenderVector(manip.GetEndEffectorTransform()[:3,3],
@@ -167,7 +167,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #yoffset = 0.06
     
     xoffset = 0.0
-    yoffset = -0.03 #-0.005
+    yoffset = 0.0#
     zoffset = 0.06
 
     desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
@@ -183,7 +183,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #check to make sure ik solutions exist
     robot = manip.GetRobot()
     with robot:
-        print 'looking for ik for morsal ' + str(morsal.GetName())
+        logger.info('looking for ik for morsal ' + morsal.GetName())
         ik_filter_options = openravepy.IkFilterOptions.CheckEnvCollisions
         #first call FindIKSolution which is faster if it succeeds
         ik_sol = manip.FindIKSolution(desired_ee_pose, ik_filter_options)
@@ -191,8 +191,9 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
         if ik_sol is None:
             ik_sols = manip.FindIKSolutions(desired_ee_pose, ik_filter_options)
             if ik_sols is None:
+                logger.info('Found no iks for morsal ' + morsal.GetName() + '. Removing from detected list.')
                 return None
-
+    logger.info('Found ik for morsal ' + morsal.GetName())
     return desired_ee_pose
 
 
