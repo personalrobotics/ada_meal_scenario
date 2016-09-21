@@ -11,6 +11,7 @@ from direct_teleop_action import DirectTeleopAction
 
 from detect_morsal import morsal_index_to_name
 
+import rospkg
 
 import logging
 logger = logging.getLogger('ada_meal_scenario')
@@ -153,6 +154,8 @@ class GetMorsal(BypassableAction):
 
 
 
+
+
 def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #fork top facing towards user
     desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
@@ -166,8 +169,9 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #xoffset = -0.185
     #yoffset = 0.06
     
-    xoffset = 0.0
-    yoffset = 0.0#
+    xoffset, yoffset = read_offsets_from_file()
+    #xoffset = 0.0
+    #yoffset = 0.0#
     zoffset = 0.06
 
     desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
@@ -196,4 +200,36 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     logger.info('Found ik for morsal ' + morsal.GetName())
     return desired_ee_pose
 
+
+def read_offsets_from_file(filename='morsal_offsets.txt', xoffset=0., yoffset=0.):
+  full_filename = rospkg.RosPack().get_path('ada_meal_scenario') + '/' + filename
+  with open(full_filename, 'r') as f:
+    while True:
+      nextline = f.readline()
+      if len(nextline) == 0:
+        break
+      split_line = nextline.split()
+      #first check if second item in split is a number
+      try:
+        offset = float(split_line[1])
+        if split_line[0] == 'xoffset':
+          xoffset = offset
+        elif split_line[0] == 'yoffset':
+          yoffset = offset
+        else:
+          logger.info('unrecognized offset from line: ' + nextline)
+
+      except ValueError:
+        logger.info('could not read the following line because second value is not a float: ' + nextline)
+        continue
+
+  logger.info('read offsets: ' + str(xoffset) +', ' + str(yoffset))
+  return xoffset,yoffset
+
+
+
+
+
+
+  
 
