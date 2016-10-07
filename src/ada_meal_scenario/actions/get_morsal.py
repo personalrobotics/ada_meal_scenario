@@ -66,21 +66,7 @@ class GetMorsal(BypassableAction):
         zoffset = -0.06
         for pose in all_desired_stab_ee_pose:
             pose[2,3] += zoffset
-        #import openravepy
-        #h3 = openravepy.misc.DrawAxes(env, desired_ee_pose)
 
-#        #save old limits
-#        old_acceleration_limits = robot.GetDOFAccelerationLimits()
-#        old_velocity_limits = robot.GetDOFVelocityLimits()
-#
-#        #slow down robot
-#        robot.SetDOFVelocityLimits(0.5*robot.GetDOFVelocityLimits())
-#        robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
-
-
-        #TODO add plan to some start pose?
-
-      
   
         if state_pub:
           state_pub.publish("getting morsal with method " + str(method))
@@ -109,8 +95,6 @@ class GetMorsal(BypassableAction):
                   ik_ranking_nominal_configs = [robot.arm.GetDOFValues(), numpy.array(robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')[1])]
                   ik_ranker = MultipleNominalConfigurations(ik_ranking_nominal_configs)
                   path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True, ranker=ik_ranker)
-
-                  #path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True)
 
           except PlanningError, e:
               raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
@@ -141,18 +125,11 @@ class GetMorsal(BypassableAction):
                                                  execute=True)  #TODO: add some tolerance
 
 
-               
-                    #from IPython import embed
-                    #embed()
-                    
         except PlanningError, e:
             raise ActionException(self, 'Failed to plan straight line path to grab morsal: %s' % str(e))
 
         # Grab the kinbody
         #robot.Grab(morsal)
-
-
-
 
 
 

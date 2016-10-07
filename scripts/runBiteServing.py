@@ -211,10 +211,6 @@ def ResetTrial(robot):
     except PlanningError, e:
       logger.info('Failed to plan to start config')
       #if it doesn't work, unload controllers
-#      from controller_manager.controller_manager_interface import SwitchController
-#      switch_controller_service = rospy.ServiceProxy('controller_manager/switch_controller', SwitchController)
-#      switch_controller_service([], ['traj_controller', 'velocity_joint_mode_controller'], 0)
-
 
 if __name__ == "__main__":
     state_pub = rospy.Publisher('ada_tasks',String, queue_size=10)

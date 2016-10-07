@@ -54,7 +54,6 @@ class DetectMorsal(BypassableAction):
             # Here we want to place the kinbody
             #  somewhere in the environment
             morsal_in_camera = numpy.eye(4)
-            #morsal_in_camera[:3,3] = [0.1, 0., 0.25]
             morsal_in_camera[:3,3] = [0.02, -0.02, 0.52]
 
             #add random noise

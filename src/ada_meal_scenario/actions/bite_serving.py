@@ -21,11 +21,6 @@ class BiteServing(BypassableAction):
 
     def execute(self, manip, env, method, ui_device, state_pub, detection_sim=False, record_trial=False, file_directory=None):
         
-        # Move to look at face
-        #action = LookAtFace(bypass = self.bypass)
-        #state_pub.publish(action.name)
-        #action.execute(manip)
-
         if record_trial:
           if file_directory is None:
             file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
