@@ -9,44 +9,44 @@ from prpy.ik_ranking import MultipleNominalConfigurations
 from assistance_policy_action import AssistancePolicyAction
 from direct_teleop_action import DirectTeleopAction
 
-from detect_morsal import morsal_index_to_name
+from detect_morsel import morsel_index_to_name
 
 import rospkg
 
 import logging
 logger = logging.getLogger('ada_meal_scenario')
 
-def get_all_morsal_bodies(env):
+def get_all_morsel_bodies(env):
   all_bodies = []
   for i in range(1000):
-        morsal_name = morsal_index_to_name(i)
-        morsal_body = env.GetKinBody(morsal_name)
-        if morsal_body:
-            all_bodies.append(morsal_body)
+        morsel_name = morsel_index_to_name(i)
+        morsel_body = env.GetKinBody(morsel_name)
+        if morsel_body:
+            all_bodies.append(morsel_body)
         else:
             break
   return all_bodies
 
 
-class GetMorsal(BypassableAction):
+class GetMorsel(BypassableAction):
 
     def __init__(self, bypass=False):
         
-        BypassableAction.__init__(self, 'GetMorsal', bypass=bypass)
+        BypassableAction.__init__(self, 'GetMorsel', bypass=bypass)
         
         
     def _run(self, manip, method, ui_device, state_pub=None, filename_trajdata=None):
         """
-        Execute a sequence of plans that pick up the morsal
+        Execute a sequence of plans that pick up the morsel
         @param manip The manipulator
         """
         global time
         robot = manip.GetRobot()
         env = robot.GetEnv()
-        all_morsals = get_all_morsal_bodies(env)
-        #morsal = all_morsals[0]
-        if all_morsals is None:
-            raise ActionException(self, 'Failed to find morsal in environment.')
+        all_morsels = get_all_morsel_bodies(env)
+        #morsel = all_morsels[0]
+        if all_morsels is None:
+            raise ActionException(self, 'Failed to find morsel in environment.')
 
         fork = env.GetKinBody('fork')
         #if True: #fork is None:
@@ -55,9 +55,9 @@ class GetMorsal(BypassableAction):
                                            [ 0.2036257 ,  0.9499768 ,  0.23681355,  0.03655854],
                                            [ 0.97663147, -0.18010443, -0.11727471,  0.92 ],
                                            [ 0.        ,  0.        ,  0.        ,  1.        ]])
-                                           for morsal in all_morsals]
+                                           for morsel in all_morsels]
         else:
-            all_desired_ee_pose = [Get_Prestab_Pose_For_Morsal(morsal, fork, manip) for morsal in all_morsals]
+            all_desired_ee_pose = [Get_Prestab_Pose_For_Morsel(morsel, fork, manip) for morsel in all_morsels]
             #remove None
             all_desired_ee_pose = [pose for pose in all_desired_ee_pose if pose is not None]
             
@@ -69,7 +69,7 @@ class GetMorsal(BypassableAction):
 
   
         if state_pub:
-          state_pub.publish("getting morsal with method " + str(method))
+          state_pub.publish("getting morsel with method " + str(method))
           if filename_trajdata and 'direct' not in method:
             state_pub.publish("recording data to " + str(filename_trajdata))
 
@@ -79,10 +79,10 @@ class GetMorsal(BypassableAction):
           else:
             fix_magnitude_user_command = False
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command, filename_trajdata=filename_trajdata)
+          assistance_policy_action.execute(manip, all_morsels, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command, filename_trajdata=filename_trajdata)
         elif method == 'blend':
           assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsals, all_desired_ee_pose, ui_device, blend_only=True, filename_trajdata=filename_trajdata)
+          assistance_policy_action.execute(manip, all_morsels, all_desired_ee_pose, ui_device, blend_only=True, filename_trajdata=filename_trajdata)
         elif method == 'direct':
           direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
           direct_teleop_action.execute(manip, ui_device, filename_trajdata=filename_trajdata)
@@ -97,14 +97,14 @@ class GetMorsal(BypassableAction):
                   path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True, ranker=ik_ranker)
 
           except PlanningError, e:
-              raise ActionException(self, 'Failed to plan to pose near morsal: %s' % str(e))
+              raise ActionException(self, 'Failed to plan to pose near morsel: %s' % str(e))
 
 
-        # Now stab the morsal
+        # Now stab the morsel
         try:
             direction = numpy.array([0., 0., -1.])
             
-            #for now, desired height is mean of all morsal heights
+            #for now, desired height is mean of all morsel heights
             desired_height = numpy.mean([pose[2,3] for pose in all_desired_stab_ee_pose])
             curr_height = manip.GetEndEffectorTransform()[2,3]
 
@@ -126,21 +126,21 @@ class GetMorsal(BypassableAction):
 
 
         except PlanningError, e:
-            raise ActionException(self, 'Failed to plan straight line path to grab morsal: %s' % str(e))
+            raise ActionException(self, 'Failed to plan straight line path to grab morsel: %s' % str(e))
 
         # Grab the kinbody
-        #robot.Grab(morsal)
+        #robot.Grab(morsel)
 
 
 
-def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
+def Get_Prestab_Pose_For_Morsel(morsel, fork, manip):
     #fork top facing towards user
     desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
                                             [ 0.,  1., 0., 0.],
                                             [ 0.,  0.,-1., 0.],
                                             [ 0.,  0., 0., 1.]])
 
-    morsal_pose = morsal.GetTransform()
+    morsel_pose = morsel.GetTransform()
 
     #old values
     #xoffset = -0.185
@@ -151,9 +151,9 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #yoffset = 0.0#
     zoffset = 0.06
 
-    desired_fork_tip_in_world[0,3] = morsal_pose[0,3] + xoffset
-    desired_fork_tip_in_world[1,3] = morsal_pose[1,3] + yoffset
-    desired_fork_tip_in_world[2,3] = morsal_pose[2,3] + zoffset
+    desired_fork_tip_in_world[0,3] = morsel_pose[0,3] + xoffset
+    desired_fork_tip_in_world[1,3] = morsel_pose[1,3] + yoffset
+    desired_fork_tip_in_world[2,3] = morsel_pose[2,3] + zoffset
 
     fork_tip_in_world = fork.GetLink('tinetip').GetTransform()
     ee_in_world = manip.GetEndEffectorTransform()
@@ -164,7 +164,7 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
     #check to make sure ik solutions exist
     robot = manip.GetRobot()
     with robot:
-        logger.info('looking for ik for morsal ' + morsal.GetName())
+        logger.info('looking for ik for morsel ' + morsel.GetName())
         ik_filter_options = openravepy.IkFilterOptions.CheckEnvCollisions
         #first call FindIKSolution which is faster if it succeeds
         ik_sol = manip.FindIKSolution(desired_ee_pose, ik_filter_options)
@@ -172,13 +172,13 @@ def Get_Prestab_Pose_For_Morsal(morsal, fork, manip):
         if ik_sol is None:
             ik_sols = manip.FindIKSolutions(desired_ee_pose, ik_filter_options)
             if ik_sols is None:
-                logger.info('Found no iks for morsal ' + morsal.GetName() + '. Removing from detected list.')
+                logger.info('Found no iks for morsel ' + morsel.GetName() + '. Removing from detected list.')
                 return None
-    logger.info('Found ik for morsal ' + morsal.GetName())
+    logger.info('Found ik for morsel ' + morsel.GetName())
     return desired_ee_pose
 
 
-def read_offsets_from_file(filename='morsal_offsets.txt', xoffset=0., yoffset=0.):
+def read_offsets_from_file(filename='morsel_offsets.txt', xoffset=0., yoffset=0.):
   full_filename = rospkg.RosPack().get_path('ada_meal_scenario') + '/' + filename
   with open(full_filename, 'r') as f:
     while True:

@@ -1,6 +1,8 @@
 # ada_meal_scenario
 A set of scripts for a meal serving scenario using Ada. 
 
+## generate_saved_trajectories.py
+If the configuration of any fixed points (e.g. servingConfiguration) are changed, this must be run to cache new trajectories
 
 ## runBiteServing.py (Marshmallow demo):
 
@@ -21,7 +23,7 @@ Note: in all terminals, first `source devel/setup.bash`. Each of the following c
 	rosrun rviz rviz
 	```
 
-1. Start the ADA controller
+1. Start the ADA controller (if running on real robot)
 	```bash
 	roslaunch ada_launch default.launch
 	```
@@ -42,15 +44,10 @@ Note: in all terminals, first `source devel/setup.bash`. Each of the following c
 
 1. Start the demo
 	```bash
-	rosrun ada_meal_scenario runBiteServing.py --real --viewer=interactivemarker --userid=99 --no-pupil-tracking
+	rosrun ada_meal_scenario runBiteServing.py --real --viewer=interactivemarker
 	```
-
-	You may see a prompt that says that user 099 already exists. Press enter to continue (this is just you so don't write participant info to the wrong place, but doesn't matter for running the demo).
 	
 At this point, a GUI should appear that allows you to select the operation mode. Select a mode (e.g., shared autonomy) and an input device (e.g., Kinova USB), then press the start next trial button.
 
 
-##water_serving.py
-============================
-This script enables Ada to give water to a person. First, a glass in the environment is detected and localized using April Tags. Then, the robot grasps the glass using TSRs, moves it to a sequence of pre-determined configurations, so that the human user can drink water from the glass, and then places the glass back to a pre-defined location. 
 

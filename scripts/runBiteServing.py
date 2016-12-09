@@ -259,7 +259,7 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true", help="Run with debug")
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
-    parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
+    parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsel")
     parser.add_argument("--userid", type=int, help="User ID number")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
