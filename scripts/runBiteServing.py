@@ -1,37 +1,27 @@
 #!/usr/bin/env python
 
-import adapy, argparse, logging, numpy, os, sys, openravepy, prpy, rospy, random, rospkg
-from prpy.planning.base import PlanningError
+import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, rospkg, time
+import numpy as np
 from catkin.find_in_workspaces import find_in_workspaces
-from ada_meal_scenario.actions.bite_serving import BiteServing
-from ada_meal_scenario.actions.bypassable_action import ActionException
-from sensor_msgs.msg import Joy
 from std_msgs.msg import String
 
-from visualization_msgs.msg import Marker,MarkerArray
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-import numpy as np
-import IPython
-import time 
+from prpy.planning.base import PlanningError
+from prpy.tsr.rodrigues import rodrigues
 
-import ada_teleoperation.KinovaStudyHelpers as KinovaStudyHelpers
-
-from prpy.tsr.rodrigues import *
-
+from ada_meal_scenario.actions.bite_serving import BiteServing
+from ada_meal_scenario.actions.bypassable_action import ActionException
 from ada_meal_scenario.gui_handler import *
-
-#from gazetracking.pupil_capture import PupilCapture
 
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
-
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
 def setup(sim=False, viewer=None, debug=True):
-    global robot, serving_phrases
+    # load the robot and environment for meal serving
 
+    # find the openrave environment file
     data_base_path = find_in_workspaces(
         search_dirs=['share'],
         project=project_name,
@@ -39,7 +29,6 @@ def setup(sim=False, viewer=None, debug=True):
         first_match_only=True)
     if len(data_base_path) == 0:
         raise Exception('Unable to find environment path. Did you source devel/setup.bash?')
-
     env_path = os.path.join(data_base_path[0], 'environments', 'table.env.xml')
     
     # Initialize logging
@@ -50,11 +39,8 @@ def setup(sim=False, viewer=None, debug=True):
     openravepy.misc.InitOpenRAVELogging()
     prpy.logger.initialize_logging()
 
-    # Load the environment
+    # Load the environment and robot
     env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
-
-    #TODO get this from a rosparam
-    right_handed = True
 
     # Set the active manipulator on the robot
     robot.arm.SetActive()
@@ -73,40 +59,31 @@ def setup(sim=False, viewer=None, debug=True):
                               [0., 0., 1., 0.795],
                               [0., 0., 0., 1.]])
 
-
     with env:
         robot.SetTransform(robot_pose)
 
-    #if sim is True:
-    #   startConfig = numpy.array([  3.33066907e-16,   2.22044605e-16,   1.66608370e+00,
-    #    -1.65549603e+00,  -1.94424475e-01,   1.06742772e+00,
-    #    -1.65409614e+00,   1.30780704e+00])
-    logger.info('Setting Initial Robot Configuration to Serving')
-    if sim is True:
-        #set configuration to look at plate if sim else plan to look at plate
-        indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
-        robot.SetDOFValues(dofindices=indices, values=values)
-    else:
-        robot.arm.PlanToNamedConfiguration('ada_meal_scenario_servingConfiguration')
+    # Set the robot joint configurations
+    ResetTrial(robot)
 
-    logger.info('Initial Config Set')
-    # Load the fork into the robot's hand
+    load_fork_and_tool(env, robot)
+
+    # add boxes for constraint to not hit user
+    AddConstraintBoxes(env, robot)
+    return env, robot
+
+def load_fork_and_tool(env, robot):
+    # Loads the fork and kinova tool holder into the environment, 
+    # sets up transforms, and has robot grab the tool
+    # also adds objects on those tools, because collision checks with the 
+    # meshes were not working properly
+
+
     tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
     env.Add(tool)
     
-    # Fork in end-effector
-    #ee_in_world = robot.GetLink('j2n6a300_link_6').GetTransform()
-#    tool_in_ee = numpy.array([[ -1., 0.,  0., 0.],
-#                              [ 0.,  1., 0., -0.002],
-#                              [ 0.,  0.,  -1., -0.118],
-#                              [ 0.,  0.,  0., 1.]])
-
-
+    #set the tool and fork transforms
     ee_in_world = robot.arm.GetEndEffectorTransform()
-    if right_handed:
-        y_trans_tool = 0.004
-    else:
-        y_trans_tool = -0.004
+    y_trans_tool = 0.004  #should flip this if we try left_handed
     tool_in_ee = numpy.array([[ 1., 0.,  0., 0.],
                             [ 0.,  1., 0., y_trans_tool],
                             [ 0.,  0.,  1., -0.042],
@@ -139,8 +116,6 @@ def setup(sim=False, viewer=None, debug=True):
     fork_box = make_collision_box_body(fork, add_to_pos=np.array([0.0, 0.0, 0.05]), add_to_extents=np.array([0.02, 0.02, 0.1]))
     tool_box = make_collision_box_body(tool, add_to_pos=np.array([0.0, 0.0, 0.04]), add_to_extents=np.array([0.055, 0.055, 0.055]))
 
-
-    
     #find all finger links
     finger_link_inds = []
     grab_link = None
@@ -152,16 +127,11 @@ def setup(sim=False, viewer=None, debug=True):
 
     robot.arm.hand.CloseHand(1.2)
 
-    logger.info('Grabbing tool and fork')
+    # grab the tool and fork, tell collision checker to ignore collisions with fingers
     robot.Grab(tool, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(fork, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(tool_box, grablink=grab_link, linkstoignore=finger_link_inds)
     robot.Grab(fork_box, grablink=grab_link, linkstoignore=finger_link_inds)
-
-
-    # add boxes for constraint to not hit user
-    KinovaStudyHelpers.AddConstraintBoxes(env, robot)
-    return env, robot
 
 
 def make_collision_box_body(kinbody, add_to_pos=np.array([0.0, 0.0, 0.0]), add_to_extents = np.array([0.0, 0.0, 0.0])):
@@ -196,10 +166,71 @@ def make_collision_box_body(kinbody, add_to_pos=np.array([0.0, 0.0, 0.0]), add_t
     box_body.Enable(True)
 
   return box_body
-  
+
+def AddConstraintBoxes(env, robot, handedness='right', name_base="constraint_boxes_", visible=False):
+    # Modifies environment to keep the robot inside a defined space
+    # Does so by adding invisible boxes around the robot, which planners
+    # avoid collisions with
+
+    #add a box behind the robot
+    box_behind = openravepy.RaveCreateKinBody(env,'')
+    box_behind.SetName(name_base + 'behind')
+    box_behind.InitFromBoxes(np.array([[0.,0.,0., 0.4, 0.1, 1.0]]), False)
+    env.Add(box_behind)
+    T = np.eye(4)
+    T[0:3,3] = robot.GetTransform()[0:3,3]
+    T[1,3] = 0.57
+    if handedness == 'right':
+        T[0,3] += 0.25
+    else:
+        T[0,3] -= 0.25
+    box_behind.SetTransform(T)
+
+
+    #add a box above so we don't swing that way too high
+    box_above = openravepy.RaveCreateKinBody(env,'')
+    box_above.SetName(name_base + 'above')
+    box_above.InitFromBoxes(np.array([[0.,0.,0., 0.5, 0.5, 0.1]]), visible)
+    env.Add(box_above)
+    T = np.eye(4)
+    T[0:3,3] = robot.GetTransform()[0:3,3]
+    T[0,3] += 0.25
+    T[1,3] -= 0.25
+    T[2,3] += 0.90
+    box_above.SetTransform(T)
+
+
+    box_left = openravepy.RaveCreateKinBody(env,'')
+    box_left.SetName(name_base + 'left')
+    box_left.InitFromBoxes(np.array([[0.,0.,0., 0.1, 0.5, 1.0]]), visible)
+    env.Add(box_left)
+    T = np.eye(4)
+    T[0:3,3] = robot.GetTransform()[0:3,3]
+    if handedness == 'right':
+        T[0,3] += 0.9
+    else:
+        T[0,3] += 0.25
+    T[1,3] = 0.25
+    box_left.SetTransform(T)
+
+    box_right = openravepy.RaveCreateKinBody(env,'')
+    box_right.SetName(name_base + 'right')
+    box_right.InitFromBoxes(np.array([[0.,0.,0., 0.1, 0.5, 1.0]]), visible)
+    env.Add(box_right)
+    T = np.eye(4)
+    T[0:3,3] = robot.GetTransform()[0:3,3]
+    if handedness == 'right':
+        T[0,3] -= 0.25
+    else:
+        T[0,3] -= 0.9
+    T[1,3] = 0.25
+    box_right.SetTransform(T)
+    
+
 
 
 def ResetTrial(robot):
+  # set the robot to the start configuration for next trial
   logger.info('Resetting Robot')
   if robot.simulated:
       indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
@@ -212,6 +243,13 @@ def ResetTrial(robot):
       logger.info('Failed to plan to start config')
       #if it doesn't work, unload controllers
 
+
+def setup_trial_recording(record_next_trial, file_directory_user):
+    # creates user directory if we will be recording
+    if record_next_trial and not os.path.exists(file_directory_user):
+        os.makedirs(file_directory_user)
+    
+
 if __name__ == "__main__":
     state_pub = rospy.Publisher('ada_tasks',String, queue_size=10)
         
@@ -222,9 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--real", action="store_true", help="Run on real robot (not simulation)")
     parser.add_argument("--viewer", type=str, default='interactivemarker', help="The viewer to load")
     parser.add_argument("--detection-sim", action="store_true", help="Simulate detection of morsal")
-    parser.add_argument("--jaco", action="store_true", default=False, help="Using jaco robot")
     parser.add_argument("--userid", type=int, help="User ID number")
-#    parser.add_argument("--no-pupil-tracking", action="store_true", help="Disable pupil tracking")
     args = parser.parse_args(rospy.myargv()[1:]) # exclude roslaunch args
 
     sim = not args.real
@@ -232,36 +268,24 @@ if __name__ == "__main__":
 
     gui_get_event, gui_trial_starting_event, gui_queue, gui_process = start_gui_process()
 
-    # Start eyetracker remote controller
-#    do_pupil_tracking= not args.no_pupil_tracking
-#    if do_pupil_tracking:
-#        logger.info('setting up pupil tracking')
-#        pupil_capture = PupilCapture()
-#        pupil_capture.setup(logger)
-#    else:
-#        pupil_capture = None
-#    logger.info('pupil tracker set, or none needed')
-
     # Where to store rosbags and other user data - set this manually if userid was provided,
-    # otherwise dynamically generate it
+    # otherwise dynamically generate it as one more than highest in directory
     file_directory_user = None
     file_directory = rospkg.RosPack().get_path('ada_meal_scenario') + '/trajectory_data'
     if args.userid:
-        user_number = "%03d"%args.userid
-        base_user_filename = "user_" + user_number
-        file_directory_user = os.path.join(file_directory, base_user_filename)
+        from ada_teleoperation.DataRecordingUtils import get_filename
+        file_directory_user = get_filename(file_directory=file_directory, filename_base='user_', file_ind=args.userid, file_type="")
         # Check whether the file_directory_user exists
         if os.path.exists(file_directory_user):
             inp = raw_input("Filename " + file_directory_user + " exists. Press q to quit or enter to continue")
             if inp == 'q':
                 raise OSError("Filename already exists. Quitting.")
-        else:
-            os.makedirs(file_directory_user)
     else:
         from ada_teleoperation.DataRecordingUtils import get_next_available_user_ind
-        user_number, file_directory_user = get_next_available_user_ind(file_directory=file_directory)
+        user_number, file_directory_user = get_next_available_user_ind(file_directory=file_directory, make_dir=False)
 
     while True:
+        #signal to gui that we want the currently selected options
         empty_queue(gui_queue)
         gui_get_event.set()
         while gui_queue.empty():
@@ -273,25 +297,18 @@ if __name__ == "__main__":
         if gui_return['quit']:
             break
         elif gui_return['start']:
-#            if gui_return['record']:
-#                # Start eyetracker recording
-#                if pupil_capture:
-#                    pupil_capture.start()
             #tell gui we are starting to reset next trial
             gui_trial_starting_event.set()
             # Start bite collection and presentation
             try:
                 manip = robot.GetActiveManipulator()
                 action = BiteServing()
+                setup_trial_recording(gui_return['record'], file_directory_user)
                 action.execute(manip, env, method=gui_return['method'], ui_device=gui_return['ui_device'], state_pub=state_pub, detection_sim=args.detection_sim, record_trial=gui_return['record'], file_directory=file_directory_user)
             except ActionException, e:
                 logger.info('Failed to complete bite serving: %s' % str(e))
 
                 ResetTrial(robot)
-
-#            finally:
-#                if pupil_capture:
-#                    pupil_capture.stop()
 
 
     gui_process.terminate()
