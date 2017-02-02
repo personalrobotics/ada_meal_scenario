@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, rospkg, time
+import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, rospkg, time, math
 import numpy as np
 from catkin.find_in_workspaces import find_in_workspaces
 from std_msgs.msg import String
@@ -12,25 +12,19 @@ from ada_meal_scenario.actions.bite_serving import BiteServing
 from ada_meal_scenario.actions.bypassable_action import ActionException
 from ada_meal_scenario.gui_handler import *
 
+from tf.transformations import *
+
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
+import IPython
+
 def setup(sim=False, viewer=None, debug=True):
     # load the robot and environment for meal serving
 
-    # find the openrave environment file
-    data_base_path = find_in_workspaces(
-        search_dirs=['share'],
-        project=project_name,
-        path='data',
-        first_match_only=True)
-    if len(data_base_path) == 0:
-        raise Exception('Unable to find environment path. Did you source devel/setup.bash?')
-    env_path = os.path.join(data_base_path[0], 'environments', 'table.env.xml')
-    
     # Initialize logging
     if debug:
         openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Debug)
@@ -40,27 +34,37 @@ def setup(sim=False, viewer=None, debug=True):
     prpy.logger.initialize_logging()
 
     # Load the environment and robot
-    env, robot = adapy.initialize(attach_viewer=viewer, sim=sim, env_path=env_path)
+    env, robot = adapy.initialize(attach_viewer=viewer, sim=sim)
 
     # Set the active manipulator on the robot
     robot.arm.SetActive()
 
-    # Now set everything to the right location in the environment
-    #if using jaco, assume we have the portable mount, and robot should have a different distance to table
-    using_jaco = robot.GetName() == 'JACO'
-    if using_jaco:
-      robot_pose = numpy.array([[1., 0., 0., 0.409],
-                              [0., 1., 0., 0.338],
-                              [0., 0., 1., 0.754],
-                              [0., 0., 0., 1.]])
-    else:
-      robot_pose = numpy.array([[1., 0., 0., 0.409],
-                              [0., 1., 0., 0.338],
-                              [0., 0., 1., 0.795],
-                              [0., 0., 0., 1.]])
-
+    # Now set everything to the right location in the environment (origin bottom left corner of table, on the floor)
+    
+    # some measurements that are useful
+    tabletop = 0.021+0.7135+0.0127
+    robotheight = 0.795
+    
+    # table
+    table = env.ReadKinBodyURI('objects/table.kinbody.xml')
+    Rx = rotation_matrix(math.pi/2.0, [1, 0, 0])
+    Tr = translation_matrix([0.92575, 0.0, -0.3705])
+    T = np.dot(Rx, Tr)
+    table.SetTransform(T)
+    env.Add(table)
+    
+    # move robot
+    Tr = translation_matrix([0.8763, 0.1143, robotheight])
+    Rz = rotation_matrix(math.pi, [0, 0, 1])
+    T = np.dot(Tr, Rz)
     with env:
-        robot.SetTransform(robot_pose)
+        robot.SetTransform(T)
+
+    # plate (w.r.t. robot)
+    plate = env.ReadKinBodyURI('objects/plastic_plate.kinbody.xml')
+    T = translation_matrix([0.55,0.30,tabletop])
+    plate.SetTransform(T)
+    env.Add(plate)
 
     # Set the robot joint configurations
     ResetTrial(robot)
@@ -68,7 +72,7 @@ def setup(sim=False, viewer=None, debug=True):
     load_fork_and_tool(env, robot)
 
     # add boxes for constraint to not hit user
-    AddConstraintBoxes(env, robot)
+    #AddConstraintBoxes(env, robot)
     return env, robot
 
 def load_fork_and_tool(env, robot):
@@ -309,7 +313,69 @@ if __name__ == "__main__":
                 logger.info('Failed to complete bite serving: %s' % str(e))
 
                 ResetTrial(robot)
+        elif gui_return['scan']:
+            
+            gui_trial_starting_event.set()
+            
+            # go to scanning pose
+            plate = env.GetKinBody('plastic_plate')
+            scan_height = 0.20
+            scan_angle = 10.0/180.0*math.pi
+            scan_radius = math.tan(scan_angle)*scan_height
+            start_angle = math.radians(-90.0)
+            stop_angle = math.radians(90.0)
+            num = 4
+            
+            # generate a workspace trajectory
+            traj = openravepy.RaveCreateTrajectory(env, '')
+            spec = openravepy.IkParameterization.GetConfigurationSpecificationFromType(
+                    openravepy.IkParameterizationType.Transform6D, 'linear')
+            traj.Init(spec)
+            plate_pose = plate.GetTransformPose()
+            
+            # for debugging
+            import tf
+            br = tf.TransformBroadcaster()
+            
+            manip = robot.GetActiveManipulator()
+            T = manip.GetEndEffectorTransform()
+            z = plate_pose[6] + scan_height
+            for theta in np.linspace(start_angle, stop_angle, num):
+                x = plate_pose[4] + math.sin(theta)*scan_radius
+                y = plate_pose[5] + math.cos(theta)*scan_radius
 
+                T = translation_matrix([x,y,z])
+                #new_z = np.array([math.sin(theta)*scan_radius, math.cos(theta)*scan_radius, scan_height])
+                #old_z = np.array([0,0,1])
+                #rot_ax = np.cross(old_z, new_z)
+                #rot_ang = np.dot(old_z, new_z)
+                #RT = rotation_matrix(angle=rot_ang, direction=rot_ax)
+                #TT = translation_matrix([x,y,z])
+                #T[0,3] = x
+                #T[1,3] = y
+                #T[2,3] = z
+                next_T = T#np.dot(TT, RT)
+                
+                # debug, broadcast target frame.
+                br.sendTransform(translation_from_matrix(next_T),
+                                 quaternion_from_matrix(next_T),
+                                 rospy.Time.now(),
+                                 'planning_target',
+                                 'map')
+                
+                IPython.embed()
+                robot.PlanToEndEffectorPose(openravepy.poseFromMatrix(next_T), execute=True)
+                #traj.Insert(traj.GetNumWaypoints(), openravepy.poseFromMatrix(next_T))
+            
+            IPython.embed()
+            # call the planner
+            #max_planning_time = 10.0 # seconds
+            #with robot:
+            #    qtraj = robot.PlanWorkspacePath(traj, timelimit=max_planning_time, position_tolerance=0.02, angular_tolerance=math.radians(3.0))
+            
+            #IPython.embed()
+            
+            
 
     gui_process.terminate()
 

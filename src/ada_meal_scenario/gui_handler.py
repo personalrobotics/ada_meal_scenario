@@ -25,6 +25,7 @@ class GuiHandler(object):
         self.get_gui_state_event = get_gui_state_event
         self.trial_starting_event = trial_starting_event
         self.return_queue = return_queue
+        self.scanning = False
 
         self.default_font = tkFont.nametofont("TkDefaultFont")
         self.default_font.configure(size=14)
@@ -56,7 +57,8 @@ class GuiHandler(object):
         self.record_button.grid(sticky=Tkinter.W+Tkinter.E)
         self.start_button = Tkinter.Button(self.start_frame, text="Start Next Trial", command=self.start_button_callback)
         self.start_button.grid(sticky=Tkinter.W+Tkinter.E)
-
+        self.scan_button = Tkinter.Button(self.start_frame, text="Perform Scan", command=self.scan_button_callback)
+        self.scan_button.grid(sticky=Tkinter.W+Tkinter.E)
 
         self.start_frame = Tkinter.Frame(self.master)
         self.start_frame.grid(row=1, column=0, sticky=Tkinter.W+Tkinter.E+Tkinter.S)
@@ -82,6 +84,8 @@ class GuiHandler(object):
 
             if self.trial_starting_event.is_set():
                 self.start_next_trial = False
+                if self.scanning:
+                    self.scanning = toggle_trial_button_callback(self.scan_button, self.scanning)
                 configure_button_not_selected(self.start_button)
                 self.trial_starting_event.clear()
            
@@ -139,6 +143,9 @@ class GuiHandler(object):
     def record_button_callback(self):
         self.record_next_trial = toggle_trial_button_callback(self.record_button, self.record_next_trial)
 
+    def scan_button_callback(self):
+        self.scanning = toggle_trial_button_callback(self.scan_button, self.scanning)
+        
     def quit_button_callback(self):
         self.quit = toggle_trial_button_callback(self.quit_button, self.quit)
         #self.add_return_to_queue()
@@ -158,6 +165,7 @@ class GuiHandler(object):
         to_ret['method'] = self.method
         to_ret['ui_device'] = self.ui_device
         to_ret['record'] = self.record_next_trial
+        to_ret['scan'] = self.scanning
         return to_ret
 
     def color_buttons(self):
