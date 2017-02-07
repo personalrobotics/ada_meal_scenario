@@ -1,3 +1,5 @@
+## TODO: change formatting of name to be consistent (i.e., run_bite_serving)
+
 #!/usr/bin/env python
 
 import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, rospkg, time
