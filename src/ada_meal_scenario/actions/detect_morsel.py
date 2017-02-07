@@ -36,6 +36,7 @@ class DetectMorsel(BypassableAction):
         #filter bad detections
         logger.info('Getting morsels in env')
         all_morsels = GetAllMorselsInEnv(env)
+        ## TODO: kill dead code
         #inds_to_filter = FilterMorselsOnTable(env.GetKinBody('table'), all_morsels)
         #self.filter_morsel_inds(env, inds_to_filter, all_morsels)
         logger.info('projecting morsel on table')
@@ -158,6 +159,7 @@ class MorselDetector(object):
         if morsel_name is None:
             morsel_name = 'morsel'
         
+        ## TODO: figure out find_in_workspaces vs rospkg - and be consistent throughout
         object_base_path = find_in_workspaces(
             search_dirs=['share'],
             project='ada_meal_scenario',
@@ -220,7 +222,7 @@ class MorselDetector(object):
               self.add_morsel(morsel_in_camera, morsel_index_to_name(morsel_index))
               morsel_index += 1
         
-
+## TODO: change name to ProjectMorselsOntoTable for clarity
 def ProjectMorselsOnTable(table, morsels, dist_above_table=0.03):
     """ Sets all morsels to be the specified distance above the table
 
