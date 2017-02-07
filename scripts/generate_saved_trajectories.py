@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     using_jaco = robot.GetName() == 'JACO'
 
+    ## TODO: use find_in_workspaces instead of RosPack (if it would work here)
     from rospkg import RosPack
     rospack = RosPack()
     package_path = rospack.get_path(project_name)
@@ -40,6 +41,7 @@ if __name__ == "__main__":
     #save old limits
     old_acceleration_limits = robot.GetDOFAccelerationLimits()
     old_velocity_limits = robot.GetDOFVelocityLimits()
+    ## TODO: kill old code and comments
     #slow down robot
     #robot.SetDOFVelocityLimits(0.6*robot.GetDOFVelocityLimits())
     #robot.SetDOFAccelerationLimits(0.8*robot.GetDOFAccelerationLimits())
