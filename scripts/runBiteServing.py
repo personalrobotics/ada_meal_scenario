@@ -1,4 +1,5 @@
 ## TODO: change formatting of name to be consistent (i.e., run_bite_serving)
+## TODO: separate file into component pieces, because it's quite long now and contains many general pieces
 
 #!/usr/bin/env python
 
@@ -122,7 +123,7 @@ def load_fork_and_tool(env, robot):
     finger_link_inds = []
     grab_link = None
     for ind,link in enumerate(robot.GetLinks()):
-        if 'inger' in link.GetName():
+        if 'inger' in link.GetName(): ## TODO: "finger" (use getname.lower() for pattern matching)
             finger_link_inds.append(ind)
         if 'end_effector' in link.GetName():
             grab_link = link
