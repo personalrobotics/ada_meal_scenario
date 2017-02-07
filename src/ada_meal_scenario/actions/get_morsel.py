@@ -40,7 +40,7 @@ class GetMorsel(BypassableAction):
         Execute a sequence of plans that pick up the morsel
         @param manip The manipulator
         """
-        global time
+        global time ## TODO: delete if it's not used, otherwise change this name because it conflicts with time module
         robot = manip.GetRobot()
         env = robot.GetEnv()
         all_morsels = get_all_morsel_bodies(env)
@@ -49,8 +49,10 @@ class GetMorsel(BypassableAction):
             raise ActionException(self, 'Failed to find morsel in environment.')
 
         fork = env.GetKinBody('fork')
+        ## TODO: Kill dead code
         #if True: #fork is None:
         if fork is None:
+            ## TODO: Is this ever used? If not, just throw an error here and delete this part
             all_desired_ee_pose = [numpy.array([[-0.06875708,  0.25515971, -0.96445113,  0.51087426],
                                            [ 0.2036257 ,  0.9499768 ,  0.23681355,  0.03655854],
                                            [ 0.97663147, -0.18010443, -0.11727471,  0.92 ],
@@ -73,6 +75,8 @@ class GetMorsel(BypassableAction):
           if filename_trajdata and 'direct' not in method:
             state_pub.publish("recording data to " + str(filename_trajdata))
 
+        ## TODO: Inconsistent indentation - make indents into four spaces
+        ## TODO: Wrap some newlines
         if 'shared_auton' in method:
           if method == 'shared_auton_prop':
             fix_magnitude_user_command = True
@@ -132,7 +136,7 @@ class GetMorsel(BypassableAction):
         #robot.Grab(morsel)
 
 
-
+## TODO: make naming format consistent (lowercase w/ underscores)
 def Get_Prestab_Pose_For_Morsel(morsel, fork, manip):
     #fork top facing towards user
     desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
@@ -177,7 +181,7 @@ def Get_Prestab_Pose_For_Morsel(morsel, fork, manip):
     logger.info('Found ik for morsel ' + morsel.GetName())
     return desired_ee_pose
 
-
+## TODO: change this file to YAML format, then use yaml.loadsafe to open it - and then delete al this file reading code
 def read_offsets_from_file(filename='morsel_offsets.txt', xoffset=0., yoffset=0.):
   full_filename = rospkg.RosPack().get_path('ada_meal_scenario') + '/' + filename
   with open(full_filename, 'r') as f:
