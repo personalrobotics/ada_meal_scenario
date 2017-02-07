@@ -1,3 +1,5 @@
+## TODO: Consider refactoring "bypass" into "morsel_detector_sim" and "skip_trajectories" or something like that
+
 import logging, numpy, prpy, os
 import prpy.rave, prpy.util
 from bypassable_action import ActionException, BypassableAction
