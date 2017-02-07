@@ -10,6 +10,7 @@ class AssistancePolicyAction(BypassableAction):
     def __init__(self, bypass=False):
         BypassableAction.__init__(self, 'ASSISTANCE_POLICY', bypass=bypass)
         
+    ## TODO: Wrap long lines    
     def _run(self, manip, objects, desired_ee_poses, ui_device, fix_magnitude_user_command=False, blend_only=False, filename_trajdata=None):
         robot = manip.GetRobot()
         env = robot.GetEnv()
