@@ -1,7 +1,9 @@
+## TODO: Delete all comments
+
 cmake_minimum_required(VERSION 2.8.3)
 project(ada_meal_scenario)
  
-find_package(catkin REQUIRED COMPONENTS)
+find_package(catkin REQUIRED COMPONENTS) ## TODO: get rid of COMPONENTS
   #openrave_catkin
   #message_generation)
 
