@@ -1,13 +1,15 @@
 # gui for interacting with the ada_meal_scenario
 # used to select the method and user input device
 
+## TODO: Delete dead code
+
 import Tkinter
 import tkFont
 from functools import partial
 
 from threading import Lock
 import multiprocessing
-from Queue import Empty
+from Queue import Empty ## TODO: Make a note about these two imports and keeping their order this way; or import multiprocessing as mp and then don't import Queue from it
 from multiprocessing import Queue
 
 default_bg_color = None
@@ -94,6 +96,7 @@ class GuiHandler(object):
         self.method_label = Tkinter.Label(frame, text="Method: \n", font=label_font)
         self.method_label.grid(sticky=Tkinter.W+Tkinter.E)
         
+        ## TODO: Use newlines 
         self.button_full_auton = self.init_button_with_callback(self.select_assistance_method, 'autonomous', 'Fully Autonomous', frame)
         self.button_direct_teleop =  self.init_button_with_callback(self.select_assistance_method, 'direct', 'Direct Teleop', frame)
         self.button_shared_auton_1 = self.init_button_with_callback(self.select_assistance_method, 'shared_auton_always', 'Shared Auton Always On', frame)
@@ -181,13 +184,13 @@ def configure_button_selected(button):
     button.configure(bg="#cc0000", activebackground="#ff0000")
 
 def configure_button_not_selected(button):
-    global default_bg_color
+    global default_bg_color ## TODO: can get rid of global because this is only read, not written
     button.configure(bg=default_bg_color, activebackground="white")
 
 
 def create_gui(get_gui_state_event, trial_starting_event, data_queue):
     gui = GuiHandler(get_gui_state_event, trial_starting_event, data_queue)
-    import signal
+    import signal ## TODO: Imports should live at the top
     import sys
     signal.signal(signal.SIGTERM, lambda signum, stack_frame: sys.exit())
 
@@ -197,7 +200,7 @@ def create_gui(get_gui_state_event, trial_starting_event, data_queue):
 def start_gui_process():
     get_gui_state_event = multiprocessing.Event()
     trial_starting_event = multiprocessing.Event()
-    data_queue = multiprocessing.Queue()
+    data_queue = multiprocessing.Queue() ## TODO: change to mp.Queue (or whatever multiprocessing gets used to; or remove the import at the top)
     p = multiprocessing.Process(target=create_gui, args=(get_gui_state_event, trial_starting_event, data_queue,))
     p.daemon = True
     p.start()
