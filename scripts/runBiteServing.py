@@ -1,7 +1,8 @@
+#!/usr/bin/env python
+
 ## TODO: change formatting of name to be consistent (i.e., run_bite_serving)
 ## TODO: separate file into component pieces, because it's quite long now and contains many general pieces
 
-#!/usr/bin/env python
 
 import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, rospkg, time
 import numpy as np
@@ -16,7 +17,7 @@ from ada_meal_scenario.actions.bypassable_action import ActionException
 from ada_meal_scenario.gui_handler import *
 
 import warnings
-warnings.simplefilter(action = "ignore", category = FutureWarning)
+#warnings.simplefilter(action = "ignore", category = FutureWarning)
 
 project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)

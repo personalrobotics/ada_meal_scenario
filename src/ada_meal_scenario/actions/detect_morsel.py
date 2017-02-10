@@ -2,6 +2,7 @@ import numpy, os, rospy, time, json
 from bypassable_action import ActionException, BypassableAction
 from std_msgs.msg import String
 from catkin.find_in_workspaces import find_in_workspaces
+import openravepy
 
 import logging
 logger = logging.getLogger('ada_meal_scenario')
@@ -18,7 +19,13 @@ class DetectMorsel(BypassableAction):
 
 
     def _run(self, robot, timeout=None):
+        """
+        Detect morsels and add to the environment
 
+        @param robot pointer to robot
+        @param timeout: max time to try and detect morsels
+        """
+        #remove morsels from previous detections from the environment
         self.remove_morsels_next_indices(robot.GetEnv(), 0)
         
         m_detector = MorselDetector(robot)
@@ -29,60 +36,77 @@ class DetectMorsel(BypassableAction):
         logger.info('Waiting to detect morsel')
         start_time = time.time()
         time.sleep(1.0) # give time for the camera image to stabilize
-        while not env.GetKinBody(morsel_index_to_name(0)) and (timeout is None or time.time() - start_time < timeout):
+        #wait until a morsel is detected
+        while (not env.GetKinBody(morsel_index_to_name(0)) and
+              (timeout is None or time.time() - start_time < timeout) ):
             logger.info('Waiting for detections')
             time.sleep(1.0)
 
         #filter bad detections
-        logger.info('Getting morsels in env')
-        all_morsels = GetAllMorselsInEnv(env)
-        ## TODO: kill dead code
-        #inds_to_filter = FilterMorselsOnTable(env.GetKinBody('table'), all_morsels)
+        logger.info('Getting morsels that were detected')
+        all_morsels = get_all_morsels_in_env(env)
+  
+        #remove morsel detections that were too far above or below table
+        #currently turned off because all detected morsels were close enough to table
+        #inds_to_filter = filter_morsels_not_on_table(env.GetKinBody('table'), all_morsels)
         #self.filter_morsel_inds(env, inds_to_filter, all_morsels)
-        logger.info('projecting morsel on table')
-        ProjectMorselsOnTable(env.GetKinBody('table'), all_morsels)
 
-        logger.info('stopping detector')
+        project_morsels_onto_table(env.GetKinBody('table'), all_morsels)
+
         m_detector.stop()
 
         if not env.GetKinBody(morsel_index_to_name(0)):
             raise ActionException(self, 'Failed to detect any morsels.')
 
     def _bypass(self, robot, num_morsels=3):
+        """
+        Simulate detection of specified number of morsels
+
+        @param robot: the OpenRAVE robot
+        @param num_morsels: number of morsels to add to environment
+        """
 
         m_detector = MorselDetector(robot)
+        # place morsels randomly in the environment the environment
         for i in range(num_morsels):
-            # Here we want to place the kinbody
-            #  somewhere in the environment
             morsel_in_camera = numpy.eye(4)
             morsel_in_camera[:3,3] = [0.02, -0.02, 0.52]
 
-            #add random noise
+            #optional: add random noise in camera frame
             rand_max_norm = 0.15
             morsel_in_camera[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
 
-            #switch to this if you want to test noise in world frame, not camera frame
+            #project into world frame
             camera_in_world = robot.GetLink('Camera_Depth_Frame').GetTransform()
             morsel_in_world = numpy.dot(camera_in_world, morsel_in_camera)
-#            morsel_in_world[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
-            #morsel_in_world[2,3] -= 0.17
+
+            #optional: add random noise in world frame
+            #morsel_in_world[0:2, 3] += numpy.random.rand(2)*2.*rand_max_norm - rand_max_norm
+
             morsel_in_camera = numpy.dot(numpy.linalg.inv(camera_in_world), morsel_in_world)
 
             m_detector.add_morsel(morsel_in_camera, morsel_index_to_name(i))
 
         env = robot.GetEnv()
-        all_morsels = GetAllMorselsInEnv(env)
+        all_morsels = get_all_morsels_in_env(env)
         num_morsels_before_filter = len(all_morsels)
         
-        ProjectMorselsOnTable(env.GetKinBody('table'), all_morsels)
-        inds_to_filter = FilterMorselsOnTable(env.GetKinBody('table'), all_morsels)
-        self.filter_morsel_inds(env, inds_to_filter, all_morsels)
+        project_morsels_onto_table(env.GetKinBody('table'), all_morsels)
+        inds_to_filter = filter_morsels_not_on_table(env.GetKinBody('table'), all_morsels)
+        self.filter_morsel_inds(
+                env,
+                inds_to_filter,
+                all_morsels)
 
         #remove the kinbodies we used in previous timesteps not used here
-        self.remove_morsels_next_indices(robot.GetEnv(), num_morsels, end_ind=num_morsels_before_filter)
+        self.remove_morsels_next_indices(
+                robot.GetEnv(),
+                num_morsels,
+                end_ind=num_morsels_before_filter)
 
     def filter_morsel_inds(self, env, inds_to_filter, all_morsels):
-        """ Removes the OpenRAVE kin bodies for all morsels with index in inds_to_filter
+        """ 
+        Removes the OpenRAVE kin bodies for all morsels with index in inds_to_filter
         Also renames to ensure morsels in the environment have consecutive order
 
         @param env the OpenRAVE environment
@@ -101,7 +125,8 @@ class DetectMorsel(BypassableAction):
         
     
     def remove_morsels_next_indices(self, env, start_ind, end_ind=0):
-        """ Removes the OpenRAVE kin bodies for all morsels with index at
+        """
+        Removes the OpenRAVE kin bodies for all morsels with index at
         or greater than the start index
         If end index is specified, will remove morsels up to that index
         Otherwise, will check indices until no morsels with index i is in the environment
@@ -123,6 +148,14 @@ class DetectMorsel(BypassableAction):
 class MorselDetector(object):
     
     def __init__(self, robot):
+        """
+        Initialize class for actual detection of morsels
+        Subscripts to topic of morsel detection, weights for returns of 
+        detected morsels, converts to robot frame, and adds to environment
+
+        @param robot: the OpenRAVE robot
+        """
+
         self.env = robot.GetEnv()
         self.robot = robot
         self.sub = None
@@ -138,6 +171,9 @@ class MorselDetector(object):
         self.distance_thresh_count = 0.02
 
     def start(self):
+        """
+        Start the detection by listening to morsel detection topic
+        """
         logger.info('Subscribing to morsel detection')
         self.sub = rospy.Subscriber("/perception/morsel_detection", 
                                     String, 
@@ -145,14 +181,22 @@ class MorselDetector(object):
                                     queue_size=1)
     
     def stop(self):
+        """
+        Stop listening to morsel detection topic
+        """
         logger.info('Unsubscribing from morsel detection')
         self.sub.unregister() # unsubscribe
         self.sub = None
 
     def add_morsel(self, morsel_in_camera, morsel_name=None):
+        """
+        Add morsel to OpenRAVE environment
+
+        @param morsel_in_camera: pose of morsel in camera frame
+        @param morsel_name: optional name of morsel kinbody
+        """
         camera_in_world = self.robot.GetLink('Camera_Depth_Frame').GetTransform()
         morsel_in_world = numpy.dot(camera_in_world, morsel_in_camera)
-        import openravepy
         h1 = openravepy.misc.DrawAxes(self.env, camera_in_world)
         h2 = openravepy.misc.DrawAxes(self.env, morsel_in_world)
         
@@ -165,7 +209,10 @@ class MorselDetector(object):
             project='ada_meal_scenario',
             path='data',
             first_match_only=True)[0]
-        ball_path = os.path.join(object_base_path, 'objects', 'smallsphere.kinbody.xml')
+        ball_path = os.path.join(
+                object_base_path,
+                'objects',
+                'smallsphere.kinbody.xml')
         if self.env.GetKinBody(morsel_name) is None:
             with self.env:
                 morsel = self.env.ReadKinBodyURI(ball_path)
@@ -180,6 +227,10 @@ class MorselDetector(object):
 
         
     def _callback(self, msg):
+        """
+        Callback for subscriber to morsel detection topic
+        Requires multiple consistent detections before adding morsel to the environment
+        """
         logger.info('Received detection')
         obj =  json.loads(msg.data)
         pts_arr = obj['pts3d']
@@ -190,17 +241,20 @@ class MorselDetector(object):
         next_hypoths = []
         next_hypoth_counts = []
         for morsel_pos in morsel_positions:
-          dists_all_hypotheses = [numpy.linalg.norm(h - morsel_pos) for h in self.morsel_pos_hypotheses]
+          dists_all_hypotheses = [numpy.linalg.norm(h - morsel_pos)
+                                 for h in self.morsel_pos_hypotheses]
 
           #if none of the distances less then thresh, count as a new detection
-          if len(dists_all_hypotheses) == 0 or min(dists_all_hypotheses) > self.distance_thresh_count:
+          if (len(dists_all_hypotheses) == 0 or
+                min(dists_all_hypotheses) > self.distance_thresh_count):
             next_hypoths.append(morsel_pos)
             next_hypoth_counts.append(1)
           else:
             ind = numpy.argmin(dists_all_hypotheses)
             #average with old pos
             old_count = self.morsel_pos_hypotheses_counts[ind]
-            new_hypoth_pos = (self.morsel_pos_hypotheses[ind]*old_count + morsel_pos) / (float(old_count + 1))
+            old_pos = self.morsel_pos_hypotheses[ind]
+            new_hypoth_pos = (old_pos*old_count + morsel_pos) / (float(old_count+1))
 
             next_hypoths.append(new_hypoth_pos)
             next_hypoth_counts.append(old_count+1)
@@ -213,7 +267,8 @@ class MorselDetector(object):
         if max(self.morsel_pos_hypotheses_counts) >= self.min_counts_required_addmorsels:
           logger.info('adding all the morsels')
           morsel_index = 0
-          for hypoth_pos, hypoth_pos_count in zip(self.morsel_pos_hypotheses, self.morsel_pos_hypotheses_counts):
+          for hypoth_pos, hypoth_pos_count in zip(self.morsel_pos_hypotheses, 
+                                                  self.morsel_pos_hypotheses_counts):
             logger.info('checking morsel at pos ' + str(hypoth_pos))
             if hypoth_pos_count >= self.min_counts_required:
               logger.info('adding morsel at pos ' + str(hypoth_pos))
@@ -222,22 +277,21 @@ class MorselDetector(object):
               self.add_morsel(morsel_in_camera, morsel_index_to_name(morsel_index))
               morsel_index += 1
         
-## TODO: change name to ProjectMorselsOntoTable for clarity
-def ProjectMorselsOnTable(table, morsels, dist_above_table=0.03):
+def project_morsels_onto_table(table, morsels, dist_above_table=0.03):
     """ Sets all morsels to be the specified distance above the table
 
     @param table the table kinbody
     @param morsels list of all morsels to project
     @param dist_above_table distance you want the bottom of the morsel to be above the table
     """
-    all_morsel_dists = GetAllDistsTableToObjects(table, morsels)
+    all_morsel_dists = get_all_dists_table_to_objects(table, morsels)
     for dist,morsel in zip(all_morsel_dists, morsels):
         morsel_transform = morsel.GetTransform()
         morsel_transform[2,3] -= dist - dist_above_table
         morsel.SetTransform(morsel_transform)
     
 
-def FilterMorselsOnTable(table, morsels, thresh_dist_below_table=0.0, thresh_dist_above_table=0.1):
+def filter_morsels_not_on_table(table, morsels, thresh_dist_below_table=0.0, thresh_dist_above_table=0.1):
     """ Detects all morsels either below the table by more then the specified amount, or above
     by more then the specified amount, and returns their indices
 
@@ -250,7 +304,7 @@ def FilterMorselsOnTable(table, morsels, thresh_dist_below_table=0.0, thresh_dis
 
     @return indices of morsels either below the table more then threshhold, or above by more then threshhold
     """
-    all_morsel_dists = GetAllDistsTableToObjects(table, morsels)
+    all_morsel_dists = get_all_dists_table_to_objects(table, morsels)
     inds_to_filter = []
     for ind,dist in enumerate(all_morsel_dists):
         if dist < thresh_dist_below_table or dist > thresh_dist_above_table:
@@ -259,7 +313,7 @@ def FilterMorselsOnTable(table, morsels, thresh_dist_below_table=0.0, thresh_dis
     return inds_to_filter
 
 
-def GetAllDistsTableToObjects(table, objects):
+def get_all_dists_table_to_objects(table, objects):
     """ Get the distance between the top of the table and the bottom of each object
 
     @param table the table kinbody
@@ -277,7 +331,7 @@ def GetAllDistsTableToObjects(table, objects):
     return dists
 
 
-def GetAllMorselsInEnv(env, start_ind=0, end_ind=0):
+def get_all_morsels_in_env(env, start_ind=0, end_ind=0):
     """ Tries to get all the morsels in the environment, based on naming
     Assumes the function morsel_index_to_name was used to name all morsels
     And all morsel numbers are consecutive

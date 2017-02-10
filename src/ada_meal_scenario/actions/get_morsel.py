@@ -35,33 +35,40 @@ class GetMorsel(BypassableAction):
         BypassableAction.__init__(self, 'GetMorsel', bypass=bypass)
         
         
-    def _run(self, manip, method, ui_device, state_pub=None, filename_trajdata=None):
+    def _run(
+            self,
+            manip,
+            method,
+            ui_device,
+            state_pub=None,
+            filename_trajdata=None):
         """
-        Execute a sequence of plans that pick up the morsel
-        @param manip The manipulator
+        Execute the specified method for picking up the morsel
+
+        @param manip: pointer to robot manipulator
+        @param method: method we should use to get morsel
+        @type  method: string
+        @param ui_device: input device for teleoperation/shared autonomy
+        @type  ui_device: string
+        @param state_pub: ros publisher for specifying when
+                          we start and stop parts of execution
+        @param filename_trajdata: filename for recording trial
+        @type  filename_trajdata: string
         """
-        global time ## TODO: delete if it's not used, otherwise change this name because it conflicts with time module
         robot = manip.GetRobot()
         env = robot.GetEnv()
         all_morsels = get_all_morsel_bodies(env)
-        #morsel = all_morsels[0]
+
         if all_morsels is None:
             raise ActionException(self, 'Failed to find morsel in environment.')
 
         fork = env.GetKinBody('fork')
-        ## TODO: Kill dead code
-        #if True: #fork is None:
-        if fork is None:
-            ## TODO: Is this ever used? If not, just throw an error here and delete this part
-            all_desired_ee_pose = [numpy.array([[-0.06875708,  0.25515971, -0.96445113,  0.51087426],
-                                           [ 0.2036257 ,  0.9499768 ,  0.23681355,  0.03655854],
-                                           [ 0.97663147, -0.18010443, -0.11727471,  0.92 ],
-                                           [ 0.        ,  0.        ,  0.        ,  1.        ]])
-                                           for morsel in all_morsels]
-        else:
-            all_desired_ee_pose = [Get_Prestab_Pose_For_Morsel(morsel, fork, manip) for morsel in all_morsels]
-            #remove None
-            all_desired_ee_pose = [pose for pose in all_desired_ee_pose if pose is not None]
+        all_desired_ee_pose = [get_prestab_pose_for_morsel(morsel, fork, manip)
+                                for morsel in all_morsels]
+
+        #remove ones that we could not find prestab pose for
+        all_desired_ee_pose = [pose for pose in all_desired_ee_pose
+                                if pose is not None]
             
           
         all_desired_stab_ee_pose = [numpy.copy(pose) for pose in all_desired_ee_pose]
@@ -71,37 +78,49 @@ class GetMorsel(BypassableAction):
 
   
         if state_pub:
-          state_pub.publish("getting morsel with method " + str(method))
-          if filename_trajdata and 'direct' not in method:
-            state_pub.publish("recording data to " + str(filename_trajdata))
+            state_pub.publish("getting morsel with method " + str(method))
+            if filename_trajdata and 'direct' not in method:
+                state_pub.publish("recording data to " + str(filename_trajdata))
 
-        ## TODO: Inconsistent indentation - make indents into four spaces
-        ## TODO: Wrap some newlines
         if 'shared_auton' in method:
-          if method == 'shared_auton_prop':
-            fix_magnitude_user_command = True
-          else:
-            fix_magnitude_user_command = False
-          assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsels, all_desired_ee_pose, ui_device, fix_magnitude_user_command=fix_magnitude_user_command, filename_trajdata=filename_trajdata)
+            #see if we should constrain magnitude of robot action 
+            if method == 'shared_auton_prop':
+                fix_magnitude_user_command = True
+            else: #regular version without 
+                fix_magnitude_user_command = False
+            assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
+            assistance_policy_action.execute(
+                    manip, all_morsels, all_desired_ee_pose, ui_device, 
+                    fix_magnitude_user_command=fix_magnitude_user_command,
+                    filename_trajdata=filename_trajdata)
+
         elif method == 'blend':
-          assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
-          assistance_policy_action.execute(manip, all_morsels, all_desired_ee_pose, ui_device, blend_only=True, filename_trajdata=filename_trajdata)
+            assistance_policy_action = AssistancePolicyAction(bypass=self.bypass)
+            assistance_policy_action.execute(
+                    manip, all_morsels, all_desired_ee_pose, ui_device, 
+                    blend_only=True, filename_trajdata=filename_trajdata)
         elif method == 'direct':
-          direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
-          direct_teleop_action.execute(manip, ui_device, filename_trajdata=filename_trajdata)
+            direct_teleop_action = DirectTeleopAction(bypass=self.bypass)
+            direct_teleop_action.execute(
+                    manip, ui_device, filename_trajdata=filename_trajdata)
         elif method == 'autonomous':
-          desired_ee_pose = all_desired_ee_pose[0]
-          try:
-              with prpy.viz.RenderPoses([desired_ee_pose], env):
+            desired_ee_pose = all_desired_ee_pose[0]
+            try:
+                with prpy.viz.RenderPoses([desired_ee_pose], env):
 
-                  #since we know we will soon go to stabbed, rank iks based on both stabbed and current
-                  ik_ranking_nominal_configs = [robot.arm.GetDOFValues(), numpy.array(robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')[1])]
-                  ik_ranker = MultipleNominalConfigurations(ik_ranking_nominal_configs)
-                  path = robot.PlanToEndEffectorPose(desired_ee_pose, execute=True, ranker=ik_ranker)
+                    #since we know we will soon go to stabbed, rank iks based on both stabbed and current
+                    ik_ranking_nominal_configs = [
+                            robot.arm.GetDOFValues(),
+                            numpy.array(robot.configurations.get_configuration('ada_meal_scenario_morselStabbedConfiguration')[1])
+                            ]
+                    ik_ranker = MultipleNominalConfigurations(ik_ranking_nominal_configs)
+                    path = robot.PlanToEndEffectorPose(
+                            desired_ee_pose,
+                            execute=True,
+                            ranker=ik_ranker)
 
-          except PlanningError, e:
-              raise ActionException(self, 'Failed to plan to pose near morsel: %s' % str(e))
+            except PlanningError, e:
+                raise ActionException(self, 'Failed to plan to pose near morsel: %s' % str(e))
 
 
         # Now stab the morsel
@@ -136,8 +155,16 @@ class GetMorsel(BypassableAction):
         #robot.Grab(morsel)
 
 
-## TODO: make naming format consistent (lowercase w/ underscores)
-def Get_Prestab_Pose_For_Morsel(morsel, fork, manip):
+def get_prestab_pose_for_morsel(morsel, fork, manip):
+    """
+    Given a morsel object, find the pose we want to target to stab
+    Output pose holds the form above the morsel center
+
+    @param morsel: pointer to morsel kinbody
+    @param fork: pointer to fork kinbody method we should use to get morsel
+    @param manip: pointer to robot manipulator
+    """
+
     #fork top facing towards user
     desired_fork_tip_in_world = numpy.array([[-1.,  0., 0., 0.],
                                             [ 0.,  1., 0., 0.],
@@ -146,13 +173,8 @@ def Get_Prestab_Pose_For_Morsel(morsel, fork, manip):
 
     morsel_pose = morsel.GetTransform()
 
-    #old values
-    #xoffset = -0.185
-    #yoffset = 0.06
-    
+    #read the offsets from the offsets file
     xoffset, yoffset = read_offsets_from_file()
-    #xoffset = 0.0
-    #yoffset = 0.0#
     zoffset = 0.06
 
     desired_fork_tip_in_world[0,3] = morsel_pose[0,3] + xoffset
