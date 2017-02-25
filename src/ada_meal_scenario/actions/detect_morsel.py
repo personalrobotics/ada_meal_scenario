@@ -4,8 +4,9 @@ from std_msgs.msg import String
 from catkin.find_in_workspaces import find_in_workspaces
 import openravepy
 
+project_name = 'ada_meal_scenario'
 import logging
-logger = logging.getLogger('ada_meal_scenario')
+logger = logging.getLogger(project_name)
 
 #name which we will add indices to
 morsel_base_name = 'morsel'
@@ -203,12 +204,11 @@ class MorselDetector(object):
         if morsel_name is None:
             morsel_name = 'morsel'
         
-        ## TODO: figure out find_in_workspaces vs rospkg - and be consistent throughout
-        object_base_path = find_in_workspaces(
-            search_dirs=['share'],
-            project='ada_meal_scenario',
-            path='data',
-            first_match_only=True)[0]
+        from rospkg import RosPack
+        rospack = RosPack()
+        package_path = rospack.get_path(project_name)
+        object_base_path = os.path.join(package_path, 'data/')
+
         ball_path = os.path.join(
                 object_base_path,
                 'objects',

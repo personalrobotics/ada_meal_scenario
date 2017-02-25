@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     using_jaco = robot.GetName() == 'JACO'
 
-    ## TODO: use find_in_workspaces instead of RosPack (if it would work here)
+
     from rospkg import RosPack
     rospack = RosPack()
     package_path = rospack.get_path(project_name)
