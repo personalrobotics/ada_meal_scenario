@@ -1,6 +1,3 @@
-## TODO: move to "scripts"
-## TODO: change morsal -> morsel
-
 #!/usr/bin/env python
 import json, numpy, rospy
 from std_msgs.msg import String
