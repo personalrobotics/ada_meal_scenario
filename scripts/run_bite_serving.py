@@ -125,10 +125,10 @@ def load_fork_and_tool(env, robot):
     #find all finger links
     finger_link_inds = []
     grab_link = None
-    for ind,link in enumerate(robot.GetLinks()):
-        if 'inger' in link.GetName(): ## TODO: "finger" (use getname.lower() for pattern matching)
+    for ind,link in enumerate(robot.GetLinks()): 
+        if 'finger' in link.GetName().lower():
             finger_link_inds.append(ind)
-        if 'end_effector' in link.GetName():
+        if 'end_effector' in link.GetName().lower():
             grab_link = link
 
     robot.arm.hand.CloseHand(1.2)
