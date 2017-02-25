@@ -14,7 +14,8 @@ from detect_morsel import morsel_index_to_name
 import rospkg
 
 import logging
-logger = logging.getLogger('ada_meal_scenario')
+project_name = 'ada_meal_scenario'
+logger = logging.getLogger(project_name)
 
 import yaml, os
 
@@ -176,10 +177,14 @@ def get_prestab_pose_for_morsel(morsel, fork, manip):
     morsel_pose = morsel.GetTransform()
 
     #read the offsets from the offsets file
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    interm_path = os.path.abspath(os.path.join(os.path.join(dir_path, os.pardir),os.pardir))
-    parent_path = os.path.abspath(os.path.join(interm_path,os.pardir))
-    offsets_file_path = os.path.join(parent_path, 'data/yaml/morsel_offsets.yaml')
+    #dir_path = os.path.dirname(os.path.realpath(__file__))
+    #interm_path = os.path.abspath(os.path.join(os.path.join(dir_path, os.pardir),os.pardir))
+    #parent_path = os.path.abspath(os.path.join(interm_path,os.pardir))
+    from rospkg import RosPack
+    rospack = RosPack()
+    package_path = rospack.get_path(project_name)
+
+    offsets_file_path = os.path.join(package_path, 'data/yaml/morsel_offsets.yaml')
 
     offsets_file_stream = open(offsets_file_path,'r')
 

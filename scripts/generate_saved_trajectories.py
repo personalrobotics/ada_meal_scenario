@@ -12,6 +12,12 @@ project_name = 'ada_meal_scenario'
 logger = logging.getLogger(project_name)
 
 def save_path(path, filename):
+   """ Save path to file
+
+   @param path: generated path that will be saved
+   @param filename: filename of saved path
+   """
+
     with open(filename, 'w') as f:
         path_str = path.serialize()
         f.write(path_str)
