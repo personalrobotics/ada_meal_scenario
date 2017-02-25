@@ -16,6 +16,8 @@ import rospkg
 import logging
 logger = logging.getLogger('ada_meal_scenario')
 
+import yaml, os
+
 def get_all_morsel_bodies(env):
   all_bodies = []
   for i in range(1000):
@@ -174,8 +176,18 @@ def get_prestab_pose_for_morsel(morsel, fork, manip):
     morsel_pose = morsel.GetTransform()
 
     #read the offsets from the offsets file
-    xoffset, yoffset = read_offsets_from_file()
-    zoffset = 0.06
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    interm_path = os.path.abspath(os.path.join(os.path.join(dir_path, os.pardir),os.pardir))
+    parent_path = os.path.abspath(os.path.join(interm_path,os.pardir))
+    offsets_file_path = os.path.join(parent_path, 'data/yaml/morsel_offsets.yaml')
+
+    offsets_file_stream = open(offsets_file_path,'r')
+
+    offsets = yaml.load(offsets_file_stream)
+    xoffset = offsets.get('xoffset')
+    yoffset = offsets.get('yoffset')
+    zoffset = offsets.get('zoffset')
+
 
     desired_fork_tip_in_world[0,3] = morsel_pose[0,3] + xoffset
     desired_fork_tip_in_world[1,3] = morsel_pose[1,3] + yoffset
@@ -202,32 +214,6 @@ def get_prestab_pose_for_morsel(morsel, fork, manip):
                 return None
     logger.info('Found ik for morsel ' + morsel.GetName())
     return desired_ee_pose
-
-## TODO: change this file to YAML format, then use yaml.loadsafe to open it - and then delete al this file reading code
-def read_offsets_from_file(filename='morsel_offsets.txt', xoffset=0., yoffset=0.):
-  full_filename = rospkg.RosPack().get_path('ada_meal_scenario') + '/' + filename
-  with open(full_filename, 'r') as f:
-    while True:
-      nextline = f.readline()
-      if len(nextline) == 0:
-        break
-      split_line = nextline.split()
-      #first check if second item in split is a number
-      try:
-        offset = float(split_line[1])
-        if split_line[0] == 'xoffset':
-          xoffset = offset
-        elif split_line[0] == 'yoffset':
-          yoffset = offset
-        else:
-          logger.info('unrecognized offset from line: ' + nextline)
-
-      except ValueError:
-        logger.info('could not read the following line because second value is not a float: ' + nextline)
-        continue
-
-  logger.info('read offsets: ' + str(xoffset) +', ' + str(yoffset))
-  return xoffset,yoffset
 
 
 
