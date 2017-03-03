@@ -4,6 +4,8 @@ from std_msgs.msg import String
 from StringIO import StringIO
 
 def publisher():
+    """ publishing morsel position in /perception/morsel_detection
+    """
 
     pub = rospy.Publisher('/perception/morsel_detection', String, queue_size=1)
     rospy.init_node('morsal_detector')
