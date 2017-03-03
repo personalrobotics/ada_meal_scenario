@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-## TODO: separate file into component pieces, because it's quite long now and contains many general pieces
-
 
 import adapy, argparse, logging, numpy, os, openravepy, prpy, rospy, rospkg, time
 import numpy as np
@@ -24,7 +22,12 @@ logger = logging.getLogger(project_name)
 constraints = AddConstraints()
 
 def setup(sim=False, viewer=None, debug=True):
-    # load the robot and environment for meal serving
+    """ load and environment for meal serving
+    @param sim: simulation or real-world
+    @param viewer: viewer for visualization
+    @param debug: output debug information
+    """
+
 
     # find the openrave environment file
     data_base_path = find_in_workspaces(
@@ -77,11 +80,11 @@ def setup(sim=False, viewer=None, debug=True):
     return env, robot
 
 def load_fork_and_tool(env, robot):
-    # Loads the fork and kinova tool holder into the environment, 
-    # sets up transforms, and has robot grab the tool
-    # also adds objects on those tools, because collision checks with the 
-    # meshes were not working properly
-
+    """ Loads the fork and kinova tool holder into the environment, 
+        sets up transforms, and has robot grab the tool
+        also adds objects on those tools, because collision checks
+        with the  meshes were not working properly
+    """
 
     tool = env.ReadKinBodyURI('objects/kinova_tool.kinbody.xml')
     env.Add(tool)
@@ -142,7 +145,8 @@ def load_fork_and_tool(env, robot):
 
 
 def ResetTrial(robot):
-  # set the robot to the start configuration for next trial
+  """ Set the robot to the start configuration for next trial
+  """
   logger.info('Resetting Robot')
   if robot.simulated:
       indices, values = robot.configurations.get_configuration('ada_meal_scenario_servingConfiguration')
@@ -157,6 +161,10 @@ def ResetTrial(robot):
 
 
 def setup_trial_recording(record_next_trial, file_directory_user):
+    """ creates user directory if we will be recording
+        @param record_next_trial: if true and path does not exist, it will make a new directory
+    """
+
     # creates user directory if we will be recording
     if record_next_trial and not os.path.exists(file_directory_user):
         os.makedirs(file_directory_user)
