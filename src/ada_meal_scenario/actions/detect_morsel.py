@@ -16,6 +16,10 @@ def morsel_index_to_name(ind):
 class DetectMorsel(BypassableAction):
 
     def __init__(self, bypass=False):
+        """ Detect morsel
+
+        @param bypass: Flag for bypassable actions
+        """
         BypassableAction.__init__(self, 'DetectBite', bypass=bypass)
 
 
@@ -47,10 +51,6 @@ class DetectMorsel(BypassableAction):
         logger.info('Getting morsels that were detected')
         all_morsels = get_all_morsels_in_env(env)
   
-        #remove morsel detections that were too far above or below table
-        #currently turned off because all detected morsels were close enough to table
-        #inds_to_filter = filter_morsels_not_on_table(env.GetKinBody('table'), all_morsels)
-        #self.filter_morsel_inds(env, inds_to_filter, all_morsels)
 
         project_morsels_onto_table(env.GetKinBody('table'), all_morsels)
 
