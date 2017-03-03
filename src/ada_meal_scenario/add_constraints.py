@@ -38,9 +38,17 @@ class AddConstraints():
 	  return box_body
 
 	def AddConstraintBoxes(self,env, robot, handedness='right', name_base="constraint_boxes_", visible=False):
-	    # Modifies environment to keep the robot inside a defined space
-	    # Does so by adding invisible boxes around the robot, which planners
-	    # avoid collisions with
+	  """Modifies environment to keep the robot inside a defined space
+	    Does so by adding invisible boxes around the robot, which planners
+	    avoid collisions with
+
+	    @param env: openrave environment object
+	    @param robot: openrave environment object
+	    @param handedness: right or left
+            @param name_base: string for boxes name
+            @param visible: visibility of object
+	    """
+
 
 	    #add a box behind the robot
 	    box_behind = openravepy.RaveCreateKinBody(env,'')
