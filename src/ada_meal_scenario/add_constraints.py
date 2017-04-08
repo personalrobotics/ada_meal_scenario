@@ -47,61 +47,55 @@ class AddConstraints():
 	    @param handedness: right or left
             @param name_base: string for boxes name
             @param visible: visibility of object
-	    """
-
-
-	    #add a box behind the robot
-	    box_behind = openravepy.RaveCreateKinBody(env,'')
-	    box_behind.SetName(name_base + 'behind')
-	    box_behind.InitFromBoxes(np.array([[0.,0.,0., 0.4, 0.1, 1.0]]), False)
-	    env.Add(box_behind)
-	    T = np.eye(4)
-	    T[0:3,3] = robot.GetTransform()[0:3,3]
-	    T[1,3] = 0.57
-	    if handedness == 'right':
-	        T[0,3] += 0.25
-	    else:
-	        T[0,3] -= 0.25
-	    box_behind.SetTransform(T)
-
-
-	    #add a box above so we don't swing that way too high
-	    box_above = openravepy.RaveCreateKinBody(env,'')
-	    box_above.SetName(name_base + 'above')
-	    box_above.InitFromBoxes(np.array([[0.,0.,0., 0.5, 0.5, 0.1]]), visible)
-	    env.Add(box_above)
-	    T = np.eye(4)
-	    T[0:3,3] = robot.GetTransform()[0:3,3]
-	    T[0,3] += 0.25
-	    T[1,3] -= 0.25
-	    T[2,3] += 0.90
-	    box_above.SetTransform(T)
-
-
-	    box_left = openravepy.RaveCreateKinBody(env,'')
-	    box_left.SetName(name_base + 'left')
-	    box_left.InitFromBoxes(np.array([[0.,0.,0., 0.1, 0.5, 1.0]]), visible)
-	    env.Add(box_left)
-	    T = np.eye(4)
-	    T[0:3,3] = robot.GetTransform()[0:3,3]
-	    if handedness == 'right':
-	        T[0,3] += 0.9
-	    else:
-	        T[0,3] += 0.25
-	    T[1,3] = 0.25
-	    box_left.SetTransform(T)
-
-	    box_right = openravepy.RaveCreateKinBody(env,'')
-	    box_right.SetName(name_base + 'right')
-	    box_right.InitFromBoxes(np.array([[0.,0.,0., 0.1, 0.5, 1.0]]), visible)
-	    env.Add(box_right)
-	    T = np.eye(4)
-	    T[0:3,3] = robot.GetTransform()[0:3,3]
-	    if handedness == 'right':
-	        T[0,3] -= 0.25
-	    else:
-	        T[0,3] -= 0.9
-	    T[1,3] = 0.25
-	    box_right.SetTransform(T)
+	    """   
+	  #add a box behind the robot
+	  box_behind = openravepy.RaveCreateKinBody(env,'')
+	  box_behind.SetName(name_base + 'behind')
+	  box_behind.InitFromBoxes(np.array([[0.,0.,0., 0.4, 0.1, 1.0]]), False)
+	  env.Add(box_behind)
+	  T = np.eye(4)
+	  T[0:3,3] = robot.GetTransform()[0:3,3]
+	  T[1,3] = 0.57
+	  if handedness == 'right':
+	      T[0,3] += 0.25
+	  else:
+	      T[0,3] -= 0.25
+	  box_behind.SetTransform(T)
+	  
+	  #add a box above so we don't swing that way too high
+	  box_above = openravepy.RaveCreateKinBody(env,'')
+	  box_above.SetName(name_base + 'above')
+	  box_above.InitFromBoxes(np.array([[0.,0.,0., 0.5, 0.5, 0.1]]), visible)
+	  env.Add(box_above)
+	  T = np.eye(4)
+	  T[0:3,3] = robot.GetTransform()[0:3,3]
+	  T[0,3] += 0.25
+	  T[1,3] -= 0.25
+	  T[2,3] += 0.90
+	  box_above.SetTransform(T)
+	  box_left = openravepy.RaveCreateKinBody(env,'')
+	  box_left.SetName(name_base + 'left')
+	  box_left.InitFromBoxes(np.array([[0.,0.,0., 0.1, 0.5, 1.0]]), visible)
+	  env.Add(box_left)
+	  T = np.eye(4)
+	  T[0:3,3] = robot.GetTransform()[0:3,3]
+	  if handedness == 'right':
+	      T[0,3] += 0.9
+	  else:
+	      T[0,3] += 0.25
+	  T[1,3] = 0.25
+	  box_left.SetTransform(T)
+	  box_right = openravepy.RaveCreateKinBody(env,'')
+	  box_right.SetName(name_base + 'right')
+	  box_right.InitFromBoxes(np.array([[0.,0.,0., 0.1, 0.5, 1.0]]), visible)
+	  env.Add(box_right)
+	  T = np.eye(4)
+	  T[0:3,3] = robot.GetTransform()[0:3,3]
+	  if handedness == 'right':
+	      T[0,3] -= 0.25
+	  else:
+	      T[0,3] -= 0.9
+	  T[1,3] = 0.25
+	  box_right.SetTransform(T)
     
 
