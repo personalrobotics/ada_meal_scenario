@@ -340,6 +340,32 @@ if __name__ == "__main__":
             manip = robot.GetActiveManipulator()
             T = manip.GetEndEffectorTransform()
             z = plate_pose[6] + scan_height
+            
+            T1 = np.array([[ 0.37340746,  0.84766785,  0.37686347, -0.06259779],
+                           [ 0.92201654, -0.38389935, -0.05006779, -0.14107948],
+                           [ 0.10223679,  0.36617004, -0.92491467,  0.25165961],
+                           [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+            T2 = np.array([[-0.51708147,  0.68893249,  0.50793581, -0.08057285],
+                           [ 0.85573138,  0.40311187,  0.32438346, -0.31260994],
+                           [ 0.01872335,  0.60238928, -0.79798282,  0.16049915],
+                           [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+            T3 = np.array([[-0.99694346,  0.01396776,  0.07686766,  0.19776393],
+                           [ 0.02678139,  0.98537362,  0.16829017, -0.36427157],
+                           [-0.07339273,  0.16983441, -0.98273587,  0.23331455],
+                           [ 0.        ,  0.        ,  0.        ,  1.        ]])
+            T4 = np.array([[-0.66329593, -0.71042765, -0.23522557,  0.25732645],
+                           [-0.69786054,  0.70069399, -0.14838664, -0.26185474],
+                           [ 0.27023912,  0.06573039, -0.96054689,  0.28063229],
+                           [ 0.        ,  0.        ,  0.        ,  1.        ]])
+             
+            Ts = [T1, T2, T3, T4]
+
+            for next_T in Ts:
+                robot.PlanToEndEffectorPose(openravepy.poseFromMatrix(next_T), execute=True)
+
+            '''
             for theta in np.linspace(start_angle, stop_angle, num):
                 x = plate_pose[4] + math.sin(theta)*scan_radius
                 y = plate_pose[5] + math.cos(theta)*scan_radius
@@ -363,11 +389,11 @@ if __name__ == "__main__":
                                  'planning_target',
                                  'map')
                 
-                IPython.embed()
+                #IPython.embed()
                 robot.PlanToEndEffectorPose(openravepy.poseFromMatrix(next_T), execute=True)
                 #traj.Insert(traj.GetNumWaypoints(), openravepy.poseFromMatrix(next_T))
-            
-            IPython.embed()
+            '''
+            #IPython.embed()
             # call the planner
             #max_planning_time = 10.0 # seconds
             #with robot:
